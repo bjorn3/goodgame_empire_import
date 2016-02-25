@@ -10,3 +10,6 @@ os:
 matrix:
     allow_failures:
         - rust: nightly
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
