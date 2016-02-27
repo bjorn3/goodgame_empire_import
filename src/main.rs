@@ -1,5 +1,7 @@
 extern crate rustc_serialize;
 
+use std::io::Write;
+
 mod raw_connection;
 mod packet;
 mod gbd;
@@ -16,9 +18,11 @@ fn main() {
     let mut un = String::new();
     let mut pw = String::new();
     
-    println!("Username: ");
+    //println!("Username: ");
+    std::io::stderr().write(b"Username: ");
     stdin.read_line(&mut un).unwrap();
-    println!("Password: ");
+    //println!("Password: ");
+    std::io::stderr().write(b"Password: ");
     stdin.read_line(&mut pw).unwrap();
     let un = un.trim();
     let pw = pw.trim();
@@ -29,7 +33,7 @@ fn main() {
         match *pkt{
             Packet::Gbd(ref data) => {
                 let data = &*data;
-                println!("{:#?}", gbd::Gbd::parse(data.to_owned()).unwrap());
+                println!("{}", gbd::Gbd::parse(data.to_owned()).unwrap());
             },
             _ => continue
         };
