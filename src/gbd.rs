@@ -6,6 +6,9 @@ use rustc_serialize::json::ParserError;
 use rustc_serialize::json::DecoderError;
 use rustc_serialize::json::EncoderError;
 
+use data::Castle;
+use data::World;
+
 macro_rules! try_field{
     ($data: expr, $field: expr) => {
         ::rustc_serialize::json::encode(&$data.get($field))
@@ -40,55 +43,49 @@ impl From<EncoderError> for Error{
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CastleData{
-    name: Option<String>,
-    x: u64,
-    y: u64,
+pub trait CastleParse{
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Option<Self> where Self: Sized;
 }
 
-impl CastleData{
-    pub fn parse(json: &Json, gcl: bool) -> Option<CastleData>{
+impl CastleParse for Castle{
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Option<Castle>{
         if !json.is_array(){
             return None;
         }
         let json: &Vec<Json> = json.as_array().unwrap();
         
-        let (name, x, y) = if gcl{
+        if json.len() < 4{
+            // HACK to be able to run when there are special events
+            println!("Parse error occured: json.len() < 4");
+            return None;
+        }
+
+        let (id, name, x, y) = if gcl{
             (
+                json[3].as_u64().unwrap(),
                 Some(json[10].as_string().unwrap().to_owned()),
-                json[1].as_u64().unwrap(),
-                json[2].as_u64().unwrap()
+                json[1].as_u64(),
+                json[2].as_u64()
             )
         }else{
             (
+                json[1].as_u64().unwrap(),
                 None,
-                json[2].as_u64().unwrap(),
-                json[3].as_u64().unwrap()
+                json[2].as_u64(),
+                json[3].as_u64()
             )
         };
         
-        Some(CastleData{ name: name, x: x, y: y })
-    }
-}
-
-impl fmt::Display for CastleData{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        write!(f, "{}", "{");
-        if let Some(ref name) = self.name{
-            write!(f, " name: {},", name);
-        }
-        write!(f, " x: {}, y: {}", self.x, self.y);
-        write!(f, " {}", "}")
+        Some(Castle{ id: id, owner_id: Some(owner_id), name: name, x: x, y: y, world: world })
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldAinM{
-    OID: u64,
-    N: String,
-    AP: Vec<CastleData>,
-    VP: Vec<CastleData>,
+    pub OID: u64,
+    pub N: String,
+    pub AP: Vec<Castle>,
+    pub VP: Vec<Castle>,
 }
 
 impl FieldAinM{
@@ -104,10 +101,10 @@ impl FieldAinM{
             let n = row.get("N").unwrap().as_string().unwrap().to_owned();
             
             let ap = row.get("AP").unwrap().as_array().unwrap();
-            let ap = ap.into_iter().map(|cell|CastleData::parse(cell, false).unwrap()).collect::<Vec<CastleData>>();
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle).collect::<Vec<Castle>>();
             
             let vp = row.get("VP").unwrap().as_array().unwrap();
-            let vp = vp.into_iter().map(|cell|CastleData::parse(cell, false).unwrap()).collect::<Vec<CastleData>>();
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle).collect::<Vec<Castle>>();
             
             FieldAinM{ OID: oid, N: n, AP: ap, VP: vp }
         }).collect::<Vec<FieldAinM>>());
@@ -121,12 +118,12 @@ impl fmt::Display for FieldAinM{
         write!(f, "n: \"{}\", ", self.N);
         write!(f, "ap: [");
         for row in &self.AP{
-            write!(f, "{},\n", row);
+            write!(f, "{:?},\n", row);
         }
         write!(f, "],\n");
         write!(f, "vp: [");
         for row in &self.VP{
-            write!(f, "{},\n", row);
+            write!(f, "{:?},\n", row);
         }
         write!(f, "]\n")
     }
@@ -135,9 +132,9 @@ impl fmt::Display for FieldAinM{
 
 #[derive(Debug, Clone)]
 pub struct Gbd{
-    gpi: String,
-    dcl: Json, //own castles
-    ain: Vec<FieldAinM>, //alliance player castles
+    pub gpi: String,
+    pub gcl: Json, //own castles
+    pub ain: Vec<FieldAinM>, //alliance player castles
 }
 
 impl Gbd{
@@ -151,10 +148,10 @@ impl Gbd{
         let mut data = data.as_object().unwrap().clone();
         data.remove("acl"); // remove chat from output
         let gpi = try_field!(data, "gpi");
-        let dcl = data.get("dcl");
+        let gcl = data.get("gcl");
         let ain = json_data.find_path(&["ain", "A", "M"]).unwrap(); // ain A M
         let ain = FieldAinM::parse(ain).unwrap();
-        let gbd = Gbd{gpi: gpi.unwrap(), dcl: dcl.unwrap().clone(), ain: ain};
+        let gbd = Gbd{gpi: gpi.unwrap(), gcl: gcl.unwrap().clone(), ain: ain};
         Ok(gbd)
     }
 }
@@ -163,7 +160,7 @@ impl fmt::Display for Gbd{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
         write!(f, "{} ", "{");
         write!(f, "gpi: {}, ", self.gpi);
-        write!(f, "dcl: {}, ", self.dcl);
+        write!(f, "gcl: {}, ", self.gcl);
         write!(f, "ain: [");
         for row in &self.ain{
             write!(f, "{}, \n", row);
