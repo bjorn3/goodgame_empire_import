@@ -2,6 +2,8 @@ extern crate rustc_serialize;
 #[macro_use]
 extern crate lazy_static;
 
+use std::env;
+use std::io;
 use std::io::Write;
 
 mod raw_connection;
@@ -19,20 +21,35 @@ use data::World;
 fn main() {
     let mut con = Connection::new();
     
-    let stdin = std::io::stdin();
-    let mut un = String::new();
-    let mut pw = String::new();
+    io::stderr().write(b"Please login\n").unwrap();
     
-    //println!("Username: ");
-    std::io::stderr().write(b"Username: ");
-    stdin.read_line(&mut un).unwrap();
-    //println!("Password: ");
-    std::io::stderr().write(b"Password: ");
-    stdin.read_line(&mut pw).unwrap();
-    let un = un.trim();
-    let pw = pw.trim();
+    let un: String = env::var("GGE_USERNAME").and_then(|data|{
+        if data.len() < 2{
+            Err(env::VarError::NotPresent)
+        }else{
+            Ok(data)
+        }
+    }).or_else(|_| -> Result<String,io::Error>{
+        let mut un = String::new();
+        try!(io::stderr().write(b"Username: "));
+        try!(io::stdin().read_line(&mut un));
+        Ok(un.trim().to_owned())
+    }).unwrap();
     
-    con.login(un, pw);
+    let pw: String = env::var("GGE_PASSWORD").and_then(|data|{
+        if data.len() < 2{
+            Err(env::VarError::NotPresent)
+        }else{
+            Ok(data)
+        }
+    }).or_else(|_| -> Result<String,io::Error>{
+        let mut pw = String::new();
+        try!(io::stderr().write(b"Password: "));
+        try!(io::stdin().read_line(&mut pw));
+        Ok(pw.trim().to_owned())
+    }).unwrap();
+
+    con.login(&un, &pw);
     
     for pkt in &con.read_packets(true){
         match *pkt{
