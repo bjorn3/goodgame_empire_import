@@ -1,3 +1,4 @@
+use std::fmt;
 use std::sync::Mutex;
 use std::collections::HashMap;
 use std::collections::hash_map::Values;
@@ -28,6 +29,19 @@ impl World{
     }
 }
 
+impl fmt::Display for World{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        let data = match *self{
+            World::Grass => "gras".to_string(),
+            World::Sand => "zand".to_string(),
+            World::Ice => "ijs".to_string(),
+            World::Fire => "vuur".to_string(),
+            _ => "Unknown world".to_string()
+        };
+        write!(f, "{}", data)
+    }
+}
+
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Castle{
     pub id: u64,
@@ -37,6 +51,29 @@ pub struct Castle{
     pub y: Option<u64>,
     pub world: Option<World>,
 }
+
+impl fmt::Display for Castle{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        let name = self.name.clone().unwrap_or(format!("{}_{}", self.owner_id.unwrap_or(0), self.id));
+        let x = match self.x{
+            Some(x) => x,
+            None => return Err(fmt::Error)
+        };
+        let y = match self.y{
+            Some(y) => y,
+            None => return Err(fmt::Error)
+        };
+        let world = self.world.unwrap_or(World::SpecialEvent);
+        try!(write!(f, "{}", "{"));
+        try!(write!(f, "\"name\": \"{}\",", name));
+        try!(write!(f, "\"X\": {},", x));
+        try!(write!(f, "\"Y\": {},", y));
+        try!(write!(f, "\"wereld\": \"{}\" ", world));
+        write!(f, "{}", "}")
+    }
+}
+
+// json format: {"name":"Ajaciedy","X":373,"Y":376,"wereld":"gras"}
 
 pub struct CastleMgr{
     inner: HashMap<u64, Castle>

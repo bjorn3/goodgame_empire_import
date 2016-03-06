@@ -46,6 +46,23 @@ fn main() {
         println!("{:?}", castle);
     }
     
+    let file_name = env_or_ask("GGE_FILENAME", "Filename: ");
+    
+    let mut f = std::fs::OpenOptions::new()
+        .read(false)
+        .write(true)
+        .create(true)
+        .open(file_name)
+        .unwrap();
+    
+    write!(f, "[").unwrap();
+    
+    for castle in data::CASTLES.lock().unwrap().iter(){
+        write!(f, "{},\n", castle).unwrap();
+    }
+    
+    write!(f, "]").unwrap();
+    
     if !found_gbd_packet{
         io::stderr().write(b"Login failed\n").unwrap();
     }
