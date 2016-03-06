@@ -23,31 +23,9 @@ fn main() {
     
     io::stderr().write(b"Please login\n").unwrap();
     
-    let un: String = env::var("GGE_USERNAME").and_then(|data|{
-        if data.len() < 2{
-            Err(env::VarError::NotPresent)
-        }else{
-            Ok(data)
-        }
-    }).or_else(|_| -> Result<String,io::Error>{
-        let mut un = String::new();
-        try!(io::stderr().write(b"Username: "));
-        try!(io::stdin().read_line(&mut un));
-        Ok(un.trim().to_owned())
-    }).unwrap();
+    let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     
-    let pw: String = env::var("GGE_PASSWORD").and_then(|data|{
-        if data.len() < 2{
-            Err(env::VarError::NotPresent)
-        }else{
-            Ok(data)
-        }
-    }).or_else(|_| -> Result<String,io::Error>{
-        let mut pw = String::new();
-        try!(io::stderr().write(b"Password: "));
-        try!(io::stdin().read_line(&mut pw));
-        Ok(pw.trim().to_owned())
-    }).unwrap();
+    let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
     con.login(&un, &pw);
     
@@ -102,4 +80,19 @@ fn read_castles(data: gbd::Gbd){
             data::CASTLES.lock().unwrap().add(castle);
         }
     }
+}
+
+fn env_or_ask(env_name: &str, question: &str) -> String{
+    env::var(env_name).and_then(|data|{
+        if data.len() < 2{
+            Err(env::VarError::NotPresent)
+        }else{
+            Ok(data)
+        }
+    }).or_else(|_| -> Result<String,io::Error>{
+        let mut data = String::new();
+        try!(io::stderr().write(question.as_bytes()));
+        try!(io::stdin().read_line(&mut data));
+        Ok(data.trim().to_owned())
+    }).unwrap()
 }
