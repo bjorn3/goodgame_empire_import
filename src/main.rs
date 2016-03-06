@@ -29,9 +29,12 @@ fn main() {
 
     con.login(&un, &pw);
     
+    let mut found_gbd_packet = false;
+    
     for pkt in &con.read_packets(true){
         match *pkt{
             Packet::Gbd(ref data) => {
+                found_gbd_packet = true;
                 let data = &*data;
                 let data = gbd::Gbd::parse(data.to_owned()).unwrap();
                 read_castles(data.clone());
@@ -43,6 +46,10 @@ fn main() {
 
     for castle in data::CASTLES.lock().unwrap().iter(){
         println!("{:?}", castle);
+    }
+    
+    if !found_gbd_packet{
+        io::stderr().write(b"Login failed\n");
     }
 }
 
