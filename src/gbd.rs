@@ -43,11 +43,11 @@ impl From<EncoderError> for Error{
 }
 
 pub trait CastleParse{
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Option<Self> where Self: Sized;
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Option<Self> where Self: Sized;
 }
 
 impl CastleParse for Castle{
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Option<Castle>{
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Option<Castle>{
         if !json.is_array(){
             return None;
         }
@@ -81,7 +81,7 @@ impl CastleParse for Castle{
             )
         };
         
-        Some(Castle{ id: id, owner_id: Some(owner_id), name: name, x: x, y: y, world: world })
+        Some(Castle{ id: id, owner_id: Some(owner_id), owner_name: owner_name, name: name, x: x, y: y, world: world })
     }
 }
 
@@ -106,10 +106,10 @@ impl FieldAinM{
             let n = row.get("N").unwrap().as_string().unwrap().to_owned();
             
             let ap = row.get("AP").unwrap().as_array().unwrap();
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle).collect::<Vec<Castle>>();
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle).collect::<Vec<Castle>>();
             
             let vp = row.get("VP").unwrap().as_array().unwrap();
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle).collect::<Vec<Castle>>();
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle).collect::<Vec<Castle>>();
             
             FieldAinM{ oid: oid, n: n, ap: ap, vp: vp }
         }).collect::<Vec<FieldAinM>>());

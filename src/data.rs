@@ -46,6 +46,7 @@ impl fmt::Display for World{
 pub struct Castle{
     pub id: u64,
     pub owner_id: Option<u64>,
+    pub owner_name: Option<String>,
     pub name: Option<String>,
     pub x: Option<u64>,
     pub y: Option<u64>,
@@ -54,7 +55,8 @@ pub struct Castle{
 
 impl fmt::Display for Castle{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        let name = self.name.clone().unwrap_or(format!("{}_{}", self.owner_id.unwrap_or(0), self.id));
+        let owner = self.owner_name.clone().unwrap_or(format!("{}", self.owner_id.unwrap_or(0)));
+        let name = self.name.clone().unwrap_or(format!("{}_{}", owner, self.id));
         let x = match self.x{
             Some(x) => x,
             None => return Err(fmt::Error)
@@ -66,6 +68,7 @@ impl fmt::Display for Castle{
         let world = self.world.unwrap_or(World::SpecialEvent);
         try!(write!(f, "{}", "{"));
         try!(write!(f, "\"name\": \"{}\",", name));
+        try!(write!(f, "\"owner\": \"{}\",", owner));
         try!(write!(f, "\"X\": {},", x));
         try!(write!(f, "\"Y\": {},", y));
         try!(write!(f, "\"wereld\": \"{}\" ", world));
@@ -92,6 +95,9 @@ impl CastleMgr{
                 if castle.owner_id == None{
                     castle.owner_id = old_castle.owner_id;
                 }
+                if castle.owner_name == None{
+                    castle.owner_name = old_castle.owner_name;
+                }
                 if castle.name == None{
                     castle.name = old_castle.name;
                 }
@@ -109,6 +115,14 @@ impl CastleMgr{
         }
         self.inner.insert(castle.id, castle.clone());
         return castle;
+    }
+    
+    pub fn add_owner_name(&mut self, uid: u64, name: &str){
+        for (_, castle) in self.inner.iter_mut(){
+            if castle.owner_id == Some(uid){
+                (*castle).owner_name = Some(name.to_string());
+            }
+        }
     }
 
     pub fn iter(&self) -> Values<u64, Castle>{
