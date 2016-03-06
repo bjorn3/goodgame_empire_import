@@ -58,7 +58,13 @@ impl CastleParse for Castle{
             println!("Parse error occured: json.len() < 4");
             return None;
         }
-
+        
+        let world = if !gcl && world == None{
+            json[0].as_u64().and_then(|world| Some(World::from_int(world)) )
+        }else{
+            world
+        };
+        
         let (id, name, x, y) = if gcl{
             (
                 json[3].as_u64().unwrap(),
