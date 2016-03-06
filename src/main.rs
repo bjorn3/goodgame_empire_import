@@ -25,24 +25,23 @@ fn main() {
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
-
+    
     con.login(&un, &pw);
     
     let mut found_gbd_packet = false;
     
-    for pkt in &con.read_packets(true){
+    for pkt in &con.read_packets(false){
         match *pkt{
             Packet::Gbd(ref data) => {
                 found_gbd_packet = true;
                 let data = &*data;
                 let data = gbd::Gbd::parse(data.to_owned()).unwrap();
                 read_castles(data.clone());
-                println!("{}", data);
             },
             _ => continue
         };
     }
-
+    
     for castle in data::CASTLES.lock().unwrap().iter(){
         println!("{:?}", castle);
     }
@@ -58,7 +57,6 @@ fn read_castles(data: gbd::Gbd){
     for world in dcl{
         let world_name = World::from_int(world.find("KID").unwrap().as_u64().unwrap());
         let castles = world.find("AI").expect("No world AI").as_array().expect("AI not a array");
-        println!("world");
         for castle in castles{
             if castle.find("AI") == None{
                 println!("{:?}", castle);
@@ -73,7 +71,6 @@ fn read_castles(data: gbd::Gbd){
                 y: castle[2].as_u64(),
                 world: Some(world_name)
             };
-            println!("{:?}", castle);
             data::CASTLES.lock().unwrap().add(castle);
         }
     }
