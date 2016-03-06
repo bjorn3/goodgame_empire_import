@@ -35,6 +35,7 @@ impl RawConnection{
         String::from(header)
     }
     
+    #[allow(unused_must_use)] //recv_var MUST NOT panic when there is a timeout error
     pub fn recv_var(&mut self, print:bool) -> String{
         let mut str = String::new();
         self.stream.read_to_string(&mut str);

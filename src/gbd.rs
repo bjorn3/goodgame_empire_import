@@ -1,6 +1,5 @@
 use std::fmt;
 
-use rustc_serialize::json;
 use rustc_serialize::json::Json;
 use rustc_serialize::json::ParserError;
 use rustc_serialize::json::DecoderError;
@@ -82,10 +81,10 @@ impl CastleParse for Castle{
 
 #[derive(Debug, Clone)]
 pub struct FieldAinM{
-    pub OID: u64,
-    pub N: String,
-    pub AP: Vec<Castle>,
-    pub VP: Vec<Castle>,
+    pub oid: u64,
+    pub n: String,
+    pub ap: Vec<Castle>,
+    pub vp: Vec<Castle>,
 }
 
 impl FieldAinM{
@@ -106,24 +105,24 @@ impl FieldAinM{
             let vp = row.get("VP").unwrap().as_array().unwrap();
             let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle).collect::<Vec<Castle>>();
             
-            FieldAinM{ OID: oid, N: n, AP: ap, VP: vp }
+            FieldAinM{ oid: oid, n: n, ap: ap, vp: vp }
         }).collect::<Vec<FieldAinM>>());
     }
 }
 
 impl fmt::Display for FieldAinM{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        write!(f, "{} ", "{");
-        write!(f, "oid: {}, ", self.OID);
-        write!(f, "n: \"{}\", ", self.N);
-        write!(f, "ap: [");
-        for row in &self.AP{
-            write!(f, "{:?},\n", row);
+        try!(write!(f, "{} ", "{"));
+        try!(write!(f, "oid: {}, ", self.oid));
+        try!(write!(f, "n: \"{}\", ", self.n));
+        try!(write!(f, "ap: ["));
+        for row in &self.ap{
+            try!(write!(f, "{:?},\n", row));
         }
-        write!(f, "],\n");
-        write!(f, "vp: [");
-        for row in &self.VP{
-            write!(f, "{:?},\n", row);
+        try!(write!(f, "],\n"));
+        try!(write!(f, "vp: ["));
+        for row in &self.vp{
+            try!(write!(f, "{:?},\n", row));
         }
         write!(f, "]\n")
     }
@@ -158,14 +157,14 @@ impl Gbd{
 
 impl fmt::Display for Gbd{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        write!(f, "{} ", "{");
-        write!(f, "gpi: {}, ", self.gpi);
-        write!(f, "gcl: {}, ", self.gcl);
-        write!(f, "ain: [");
+        try!(write!(f, "{} ", "{"));
+        try!(write!(f, "gpi: {}, ", self.gpi));
+        try!(write!(f, "gcl: {}, ", self.gcl));
+        try!(write!(f, "ain: ["));
         for row in &self.ain{
-            write!(f, "{}, \n", row);
+            try!(write!(f, "{}, \n", row));
         }
-        write!(f, "]");
+        try!(write!(f, "]"));
         write!(f, "{}", "}")
     }
 }

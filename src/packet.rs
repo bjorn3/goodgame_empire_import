@@ -1,5 +1,3 @@
-use gbd::Gbd;
-
 macro_rules! try_packet{
     ($data: expr, $reg: expr, $variant: expr) => {
         if $data.find($reg) == Some(0){
@@ -27,16 +25,4 @@ impl Packet{
 		try_packet!(data, "%xt%gbd%1%0%", Packet::Gbd);
         Packet::Data(data)
     }
-    
-    pub fn decode_gbd(&self) -> Option<Gbd>{
-        match *self{
-            Packet::Gbd(ref str) => {
-                
-                None
-            },
-            _ => None
-        }
-    }
 }
-
-

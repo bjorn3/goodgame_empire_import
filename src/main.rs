@@ -12,7 +12,6 @@ mod data;
 mod gbd;
 mod connection;
 
-use raw_connection::RawConnection;
 use packet::Packet;
 use connection::Connection;
 use data::Castle;
@@ -49,7 +48,7 @@ fn main() {
     }
     
     if !found_gbd_packet{
-        io::stderr().write(b"Login failed\n");
+        io::stderr().write(b"Login failed\n").unwrap();
     }
 }
 
@@ -80,10 +79,10 @@ fn read_castles(data: gbd::Gbd){
     }
 
     for ain in data.ain{
-        for castle in ain.AP{
+        for castle in ain.ap{
             data::CASTLES.lock().unwrap().add(castle);
         }
-        for castle in ain.VP{
+        for castle in ain.vp{
             data::CASTLES.lock().unwrap().add(castle);
         }
     }

@@ -30,17 +30,15 @@ impl Connection{
     pub fn login(&mut self, un: &str, pw: &str){
         let login_header = r##"<msg t='sys'><body action='login' r='0'><login z='EmpireEx_11'><nick><![CDATA[]]></nick><pword><![CDATA[1455712286016%nl%]]></pword></login></body></msg>"##.to_string() + "\0";
         let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un) + "\0";
-        let expected = r##"%xt%nfo%1%0%{\"sectorCountY\":99,\"XML\":\"175.29\",\"minNameSize\":3,\"sectorCountX\":99}%\0%xt%rlu%-1%1%0%100000%2%Lobby%"##;
         
-        let _ = self.raw_con.send(&login_header);
+        self.raw_con.send(&login_header);
         
-        let result = self.raw_con.recv(true);
+        self.raw_con.recv(true);
         
-        //assert_eq!(result, expected);
         
-        let _ = self.raw_con.send(&login_code);
+        self.raw_con.send(&login_code);
         
-        let _ = self.raw_con.recv(true);
+        self.raw_con.recv(true);
     }
     
     pub fn read_data(&mut self, print: bool) -> Vec<String>{
@@ -64,12 +62,14 @@ impl Connection{
     pub fn read_packets(&mut self, print: bool) -> Vec<Packet>{
         let data = self.read_data(false);
         let packets = data.iter().map(|d|{
-                let packet = Packet::new(d.to_string());
-                if let Packet::Kpi(_) = packet{
-                    return packet;
-                }
+            let packet = Packet::new(d.to_string());
+            if let Packet::Kpi(_) = packet{
+                return packet;
+            }
+            if print{
                 println!("{:#?}\n", packet);
-                packet
+            }
+            packet
         }).collect::<Vec<Packet>>();
         packets
     }
