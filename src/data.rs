@@ -3,10 +3,6 @@ use std::sync::Mutex;
 use std::collections::HashMap;
 use std::collections::hash_map::Values;
 
-lazy_static!{
-    pub static ref CASTLES: Mutex<CastleMgr> = Mutex::new(CastleMgr::new());
-}
-
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 pub enum World{
     Fire,
@@ -76,56 +72,38 @@ impl fmt::Display for Castle{
     }
 }
 
-// json format: {"name":"Ajaciedy","X":373,"Y":376,"wereld":"gras"}
-
-pub struct CastleMgr{
-    inner: HashMap<u64, Castle>
+pub struct DataMgr{
+    pub castles: HashMap<u64, Castle>
 }
 
-impl CastleMgr{
+impl DataMgr{
     pub fn new() -> Self{
-        CastleMgr{ inner: HashMap::new() }
+        DataMgr{ castles: HashMap::new() }
     }
 
-    pub fn add(&mut self, castle: Castle) -> Castle{
+    pub fn add_castle(&mut self, castle: Castle) -> Castle{
         let mut castle = castle;
-        let old_castle = self.inner.remove(&castle.id);
+        let old_castle = self.castles.remove(&castle.id);
         match old_castle{
             Some(old_castle) => {
-                if castle.owner_id == None{
-                    castle.owner_id = old_castle.owner_id;
-                }
-                if castle.owner_name == None{
-                    castle.owner_name = old_castle.owner_name;
-                }
-                if castle.name == None{
-                    castle.name = old_castle.name;
-                }
-                if castle.x == None{
-                    castle.x = old_castle.x;
-                }
-                if castle.y == None{
-                    castle.y = old_castle.y;
-                }
-                if castle.world == None{
-                    castle.world = old_castle.world;
-                }
+                castle.owner_id = castle.owner_id.or(old_castle.owner_id);
+                castle.owner_name = castle.owner_name.or(old_castle.owner_name);
+                castle.name = castle.name.or(old_castle.name);
+                castle.x = castle.x.or(old_castle.x);
+                castle.y = castle.y.or(old_castle.y);
+                castle.world = castle.world.or(old_castle.world);
             },
             None => {}
         }
-        self.inner.insert(castle.id, castle.clone());
+        self.castles.insert(castle.id, castle.clone());
         return castle;
     }
     
     pub fn add_owner_name(&mut self, uid: u64, name: &str){
-        for (_, castle) in self.inner.iter_mut(){
+        for (_, castle) in self.castles.iter_mut(){
             if castle.owner_id == Some(uid){
                 (*castle).owner_name = Some(name.to_string());
             }
         }
-    }
-
-    pub fn iter(&self) -> Values<u64, Castle>{
-        self.inner.values()
     }
 }

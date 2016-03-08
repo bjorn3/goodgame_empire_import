@@ -1,6 +1,4 @@
 extern crate rustc_serialize;
-#[macro_use]
-extern crate lazy_static;
 
 use std::env;
 use std::io;
@@ -14,18 +12,16 @@ mod connection;
 
 use packet::Packet;
 use connection::Connection;
-use data::Castle;
-use data::World;
+use data::{Castle, World, DataMgr};
 
 fn main() {
+    let mut data_mgr = DataMgr::new();
+
     let mut con = Connection::new();
     
     io::stderr().write(b"Please login\n").unwrap();
-    
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
-    
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
-    
     con.login(&un, &pw);
     
     let mut found_gbd_packet = false;
@@ -36,13 +32,13 @@ fn main() {
                 found_gbd_packet = true;
                 let data = &*data;
                 let data = gbd::Gbd::parse(data.to_owned()).unwrap();
-                read_castles(&un, data.clone());
+                read_castles(&mut data_mgr, &un, data.clone());
             },
             _ => continue
         };
     }
     
-    for castle in data::CASTLES.lock().unwrap().iter(){
+    for castle in data_mgr.castles.values(){
         println!("{:?}", castle);
     }
     
@@ -57,7 +53,7 @@ fn main() {
     
     write!(f, "[").unwrap();
     
-    for castle in data::CASTLES.lock().unwrap().iter(){
+    for castle in data_mgr.castles.values(){
         write!(f, "{},\n", castle).unwrap();
     }
     
@@ -68,7 +64,7 @@ fn main() {
     }
 }
 
-fn read_castles(user: &str, data: gbd::Gbd){
+fn read_castles(data_mgr: &mut DataMgr, user: &str, data: gbd::Gbd){
     let pid = data.gcl.find("PID").unwrap().as_u64().unwrap();
     let owner_name = user;
     let dcl = data.gcl.find("C").unwrap().as_array().unwrap();
@@ -90,16 +86,16 @@ fn read_castles(user: &str, data: gbd::Gbd){
                 y: castle[2].as_u64(),
                 world: Some(world_name)
             };
-            data::CASTLES.lock().unwrap().add(castle);
+            data_mgr.add_castle(castle);
         }
     }
 
     for ain in data.ain{
         for castle in ain.ap{
-            data::CASTLES.lock().unwrap().add(castle);
+            data_mgr.add_castle(castle);
         }
         for castle in ain.vp{
-            data::CASTLES.lock().unwrap().add(castle);
+            data_mgr.add_castle(castle);
         }
     }
 }
