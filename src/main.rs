@@ -4,7 +4,6 @@ use std::env;
 use std::io;
 use std::io::Write;
 
-mod raw_connection;
 mod packet;
 mod data;
 mod gbd;
