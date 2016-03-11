@@ -43,15 +43,6 @@ impl Connection{
         String::from(data)
     }
 
-    #[allow(unused_must_use)] //recv_var MUST NOT panic when there is a timeout error
-    fn recv_var(&mut self, print:bool) -> String{
-        let mut string = String::new();
-        self.stream.read_to_string(&mut string);
-        if print{ println!("Data received: {}", string) };
-        string
-    }
-    
-
     // clean connection
     pub fn login(&mut self, un: &str, pw: &str){
         let login_header = r##"<msg t='sys'><body action='login' r='0'><login z='EmpireEx_11'><nick><![CDATA[]]></nick><pword><![CDATA[1455712286016%nl%]]></pword></login></body></msg>"##.to_string() + "\0";
@@ -64,40 +55,35 @@ impl Connection{
         self.recv(true);
     }
     
-    pub fn read_data(&mut self, print: bool) -> Vec<String>{
-        let mut data = String::new();
+    pub fn read_data(&mut self, print: bool) -> Box<Iterator<Item=String>>{
+        static SPLIT: &'static [u8] = &[0x00];
+        let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
+        let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
         
-        loop{
-            let new_data = self.recv_var(false);
-            if new_data.is_empty(){
-                break;
-            }
-            data = data + &*new_data;
-        }
+        let data = splitter.map(|splited|String::from_utf8(splited.unwrap()).unwrap());
         
-        let data = data.split('\0').collect::<Vec<&str>>();
-        
-        if print{
-            println!("{}", data.join("\n\n"))
+        let data: Box<Iterator<Item=String>> = if print{
+            Box::new(data.map(|text|{
+                println!("{}\n\n", text);
+                text
+            }))
+        }else{
+            Box::new(data)
         };
         
-        return data.iter().map(|d| d.to_string()).collect::<Vec<String>>();
+        Box::new(data)
     }
     
-    pub fn read_packets(&mut self, print: bool) -> Vec<Packet>{
+    pub fn read_packets(&mut self) -> Box<Iterator<Item=Packet>>{
         let data = self.read_data(false);
-        let packets = data.iter().map(|d|{
+        let packets = data.map(|d|{
             let packet = Packet::new(d.to_string());
             if let Packet::Kpi(_) = packet{
                 return packet;
             }
 
-            if print{
-                println!("{:#?}\n", packet);
-            }
-
             packet
-        }).collect::<Vec<Packet>>();
-        packets
+        });
+        Box::new(packets)
     }
 }

@@ -1,4 +1,5 @@
 extern crate rustc_serialize;
+extern crate byte_stream_splitter;
 
 use std::env;
 use std::io;
@@ -25,8 +26,8 @@ fn main() {
     
     let mut found_gbd_packet = false;
     
-    for pkt in &con.read_packets(false){
-        match *pkt{
+    for pkt in con.read_packets(){
+        match pkt{
             Packet::Gbd(ref data) => {
                 found_gbd_packet = true;
                 let data = &*data;
