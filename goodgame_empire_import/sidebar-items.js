@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["read_castles","Read castles"]],"mod":[["connection","Goodgame empire connection"],["data","Data"],["error","Error"],["gbd","Data reader"],["packet","Packet"]]});

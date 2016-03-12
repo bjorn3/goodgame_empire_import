@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["World","World"]],"struct":[["Castle","Castle data"],["DataMgr","Data manager"]]});

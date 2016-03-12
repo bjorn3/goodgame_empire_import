@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["FieldAinM","The alliance member data"],["Gbd","Main data"]],"trait":[["CastleParse","Can parse castles"]]});

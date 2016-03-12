@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Connection","Goodgame empire connection"]]});
