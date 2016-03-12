@@ -1,10 +1,8 @@
 use std::fmt;
 
 use rustc_serialize::json::Json;
-use rustc_serialize::json::ParserError;
-use rustc_serialize::json::DecoderError;
-use rustc_serialize::json::EncoderError;
 
+use error::Error;
 use data::Castle;
 use data::World;
 
@@ -14,49 +12,21 @@ macro_rules! try_field{
     };
 }
 
-
-#[derive(Debug)]
-pub enum Error{
-    InvalidFormat,
-    ParserError(ParserError),
-    DecoderError(DecoderError),
-    EncoderError(EncoderError)
-}
-
-impl From<ParserError> for Error{
-    fn from(err: ParserError) -> Error{
-        Error::ParserError(err)
-    }
-}
-
-
-impl From<DecoderError> for Error{
-    fn from(err: DecoderError) -> Error{
-        Error::DecoderError(err)
-    }
-}
-
-impl From<EncoderError> for Error{
-    fn from(err: EncoderError) -> Error{
-        Error::EncoderError(err)
-    }
-}
-
 pub trait CastleParse{
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Option<Self> where Self: Sized;
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Result<Self, Error> where Self: Sized;
 }
 
 impl CastleParse for Castle{
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Option<Castle>{
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Result<Castle, Error>{
         if !json.is_array(){
-            return None;
+            return Err(Error::InvalidFormat);
         }
         let json: &Vec<Json> = json.as_array().unwrap();
         
         if json.len() < 4{
             // HACK to be able to run when there are special events
             println!("Parse error occured: json.len() < 4");
-            return None;
+            return Err(Error::InvalidFormat);
         }
         
         let world = if !gcl && world == None{
@@ -81,7 +51,7 @@ impl CastleParse for Castle{
             )
         };
         
-        Some(Castle{ id: id, owner_id: Some(owner_id), owner_name: owner_name, name: name, x: x, y: y, world: world })
+        Ok(Castle{ id: id, owner_id: Some(owner_id), owner_name: owner_name, name: name, x: x, y: y, world: world })
     }
 }
 
@@ -94,22 +64,28 @@ pub struct FieldAinM{
 }
 
 impl FieldAinM{
-    pub fn parse(json: &Json) -> Option<Vec<FieldAinM>>{
+    pub fn parse(json: &Json) -> Result<Vec<FieldAinM>, Error>{
         if !json.is_array(){
-            return None;
+            return Err(Error::InvalidFormat);
         }
         let json: &Vec<Json> = json.as_array().unwrap();
-        return Some(json.into_iter().map(|row|{
+        return Ok(json.into_iter().map(|row|{
             let row = row.as_object().unwrap();
             
             let oid = row.get("OID").unwrap().as_u64().unwrap();
             let n = row.get("N").unwrap().as_string().unwrap().to_owned();
             
             let ap = row.get("AP").unwrap().as_array().unwrap();
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle).collect::<Vec<Castle>>();
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle.map_err(|err|{
+                println!("{}", err);
+                err
+            }).ok()).collect::<Vec<Castle>>();
             
             let vp = row.get("VP").unwrap().as_array().unwrap();
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle).collect::<Vec<Castle>>();
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle.map_err(|err|{
+                println!("{}", err);
+                err
+            }).ok()).collect::<Vec<Castle>>();
             
             FieldAinM{ oid: oid, n: n, ap: ap, vp: vp }
         }).collect::<Vec<FieldAinM>>());

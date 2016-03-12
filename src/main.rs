@@ -5,6 +5,7 @@ use std::env;
 use std::io;
 use std::io::Write;
 
+mod error;
 mod packet;
 mod data;
 mod gbd;
