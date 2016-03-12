@@ -1,7 +1,5 @@
 use std::fmt;
-use std::sync::Mutex;
 use std::collections::HashMap;
-use std::collections::hash_map::Values;
 
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 pub enum World{
