@@ -6,6 +6,7 @@ macro_rules! try_packet{
     };
 }
 
+///A server returned packet of data
 #[derive(Debug)]
 pub enum Packet{
     Data(String),
@@ -16,6 +17,7 @@ pub enum Packet{
 }
 
 impl Packet{
+    ///Create a packet from text
     pub fn new(data: String) -> Self{
         if data.is_empty(){
             return Packet::None;

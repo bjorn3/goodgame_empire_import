@@ -3,9 +3,12 @@ use rustc_serialize::json;
 use std::fmt;
 use std::error;
 
+///Generic error type
 #[derive(Debug)]
 pub enum Error{
+    ///Can't parse the data returned from the server
     InvalidFormat,
+    ///Can't parse the json data
     JsonError(JsonError)
 }
 
@@ -18,7 +21,7 @@ impl fmt::Display for Error{
 impl error::Error for Error{
     fn description(&self) -> &str{
         match *self{
-            Error::InvalidFormat => "The data returned from the server can't be parsed.\nThis is likely a bug in this program.\nPlease report this at https://github.com/bjorn3/goodgame_empire_import/issues.",
+            Error::InvalidFormat => "Can't parse the data returned from the server.\nThis is likely a bug in this program.\nPlease report this at https://github.com/bjorn3/goodgame_empire_import/issues.",
             Error::JsonError(ref err) => err.description()
         }
     }
@@ -31,12 +34,14 @@ impl error::Error for Error{
     }
 }
 
+///Cast json errors to Error
 impl<T> From<T> for Error where JsonError: From<T>{
     fn from(err: T) -> Error{
         Error::JsonError(From::from(err))
     }
 }
 
+///Generic json error
 #[derive(Debug)]
 pub enum JsonError{
     ParserError(json::ParserError),

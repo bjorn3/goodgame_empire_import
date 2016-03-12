@@ -12,7 +12,9 @@ macro_rules! try_field{
     };
 }
 
+///Can parse castles
 pub trait CastleParse{
+    ///Parse castle
     fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Result<Self, Error> where Self: Sized;
 }
 
@@ -55,15 +57,21 @@ impl CastleParse for Castle{
     }
 }
 
+///The alliance member data
 #[derive(Debug, Clone)]
 pub struct FieldAinM{
+    ///Internal id
     pub oid: u64,
+    ///Username
     pub n: String,
+    ///Base castles
     pub ap: Vec<Castle>,
+    ///Support castles
     pub vp: Vec<Castle>,
 }
 
 impl FieldAinM{
+    ///Parse json data
     pub fn parse(json: &Json) -> Result<Vec<FieldAinM>, Error>{
         if !json.is_array(){
             return Err(Error::InvalidFormat);
@@ -110,15 +118,19 @@ impl fmt::Display for FieldAinM{
     }
 }
 
-
+///Main data
 #[derive(Debug, Clone)]
 pub struct Gbd{
+    ///User data
     pub gpi: String,
-    pub gcl: Json, //own castles
-    pub ain: Vec<FieldAinM>, //alliance player castles
+    ///Own castles
+    pub gcl: Json,
+    ///Alliance member castles
+    pub ain: Vec<FieldAinM>
 }
 
 impl Gbd{
+    ///Parse text returned from the server
     pub fn parse(data: String) -> Result<Self, Error>{
         let data = data.trim_matches('%');
         let data = try!(Json::from_str(&data));

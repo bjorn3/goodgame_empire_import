@@ -1,12 +1,18 @@
 extern crate rustc_serialize;
 extern crate byte_stream_splitter;
 
+///Error
 pub mod error;
+///Packet
 pub mod packet;
+///Data
 pub mod data;
+///Data reader
 pub mod gbd;
+///Goodgame empire connection
 pub mod connection;
 
+///Read castles
 pub fn read_castles(data_mgr: &mut data::DataMgr, user: &str, data: gbd::Gbd){
     let pid = data.gcl.find("PID").unwrap().as_u64().unwrap();
     let owner_name = user;

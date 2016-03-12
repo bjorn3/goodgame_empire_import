@@ -1,16 +1,23 @@
 use std::fmt;
 use std::collections::HashMap;
 
+///World
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 pub enum World{
+    ///Fire Peaks
     Fire,
+    ///Burning Sands
     Sand,
+    ///Green
     Grass,
+    ///EW
     Ice,
+    ///Special Event
     SpecialEvent
 }
 
 impl World{
+    ///Get world from internal integer
     pub fn from_int(num: u64) -> Self{
         match num{
             0 => World::Grass,
@@ -36,14 +43,22 @@ impl fmt::Display for World{
     }
 }
 
+///Castle data
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Castle{
+    ///Internal id
     pub id: u64,
+    ///Internal owner id
     pub owner_id: Option<u64>,
+    ///Owner name
     pub owner_name: Option<String>,
+    ///Castle name
     pub name: Option<String>,
+    ///X position
     pub x: Option<u64>,
+    ///Y position
     pub y: Option<u64>,
+    ///World
     pub world: Option<World>,
 }
 
@@ -70,15 +85,19 @@ impl fmt::Display for Castle{
     }
 }
 
+///Data manager
 pub struct DataMgr{
+    ///List of castles
     pub castles: HashMap<u64, Castle>
 }
 
 impl DataMgr{
+    ///Create new data manager
     pub fn new() -> Self{
         DataMgr{ castles: HashMap::new() }
     }
-
+    
+    ///Add the data of the specified castle
     pub fn add_castle(&mut self, castle: Castle) -> Castle{
         let mut castle = castle;
         let old_castle = self.castles.remove(&castle.id);
@@ -97,6 +116,7 @@ impl DataMgr{
         return castle;
     }
     
+    ///Add the name of the specified user
     pub fn add_owner_name(&mut self, uid: u64, name: &str){
         for (_, castle) in self.castles.iter_mut(){
             if castle.owner_id == Some(uid){
