@@ -38,7 +38,7 @@ fn main() {
         };
     }
     
-    for castle in data_mgr.castles.values(){
+    for castle in data_mgr.castles.values().take(20){
         println!("{:?}", castle);
     }
     
