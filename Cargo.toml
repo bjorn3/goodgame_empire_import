@@ -3,6 +3,16 @@ name = "goodgame_empire_import"
 version = "0.0.1"
 authors = ["bjorn"]
 
+[lib]
+name = "goodgame_empire_import"
+path = "src/lib.rs"
+doc = true
+
+[[bin]]
+name = "goodgame_empire_import"
+path = "src/main.rs"
+doc = false
+
 [dependencies]
 "rustc-serialize" = "0.3.18"
 byte_stream_splitter = "0.1.3"
