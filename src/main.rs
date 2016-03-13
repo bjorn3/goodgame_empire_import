@@ -54,8 +54,21 @@ fn main() {
     
     write!(f, "[").unwrap();
     
-    for castle in data_mgr.castles.values(){
-        write!(f, "{},\n", castle).unwrap();
+    let mut iter = data_mgr.castles.values().peekable();
+    loop{
+        if let Some(castle) = iter.next(){
+            let has_next = match iter.peek(){
+                Some(_) => true,
+                None => false
+            };
+            write!(f, "{}{}\n", castle, if has_next{
+                ","
+            }else{
+                ""
+            }).unwrap();
+        }else{
+            break;
+        }
     }
     
     write!(f, "]").unwrap();
