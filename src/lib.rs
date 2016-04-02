@@ -1,6 +1,6 @@
 extern crate rustc_serialize;
-extern crate byte_stream_splitter;
 
+mod splitter;
 ///Error
 pub mod error;
 ///Packet

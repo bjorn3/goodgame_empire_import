@@ -59,37 +59,22 @@ impl Connection{
         self.recv(true);
     }
     
-    ///Read splited raw packets
-    pub fn read_data(&mut self, print: bool) -> Box<Iterator<Item=String>>{
-        static SPLIT: &'static [u8] = &[0x00];
-        let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
-        let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
+    ///Read packets
+    pub fn read_packets(&mut self, print: bool) -> Box<Iterator<Item=Packet>>{
+        use splitter;
+
+        let buf_reader = ::std::io::BufReader::new(self.stream.try_clone().unwrap());
+        let splitter = splitter::ByteStreamSplitter::new(buf_reader);
         
         let data = splitter.map(|splited|String::from_utf8(splited.unwrap()).unwrap());
         
-        let data: Box<Iterator<Item=String>> = if print{
-            Box::new(data.map(|text|{
+        let data = data.map(move |text|{
+            if print{
                 println!("{}\n\n", text);
-                text
-            }))
-        }else{
-            Box::new(data)
-        };
-        
-        Box::new(data)
-    }
-    
-    ///Read packets
-    pub fn read_packets(&mut self) -> Box<Iterator<Item=Packet>>{
-        let data = self.read_data(false);
-        let packets = data.map(|d|{
-            let packet = Packet::new(d.to_string());
-            if let Packet::Kpi(_) = packet{
-                return packet;
             }
-
-            packet
+            text
         });
-        Box::new(packets)
+
+        Box::new(data.map(Packet::new))
     }
 }
