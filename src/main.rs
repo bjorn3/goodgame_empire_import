@@ -1,19 +1,11 @@
-extern crate rustc_serialize;
-extern crate byte_stream_splitter;
-
+extern crate goodgame_empire_import as gge;
 use std::env;
 use std::io;
 use std::io::Write;
 
-mod error;
-mod packet;
-mod data;
-mod gbd;
-mod connection;
-
-use packet::Packet;
-use connection::Connection;
-use data::{Castle, World, DataMgr};
+use gge::packet::Packet;
+use gge::connection::Connection;
+use gge::data::{Castle, World, DataMgr};
 
 fn main() {
     let mut data_mgr = DataMgr::new();
@@ -32,7 +24,7 @@ fn main() {
             Packet::Gbd(ref data) => {
                 found_gbd_packet = true;
                 let data = &*data;
-                let data = gbd::Gbd::parse(data.to_owned()).unwrap();
+                let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
                 read_castles(&mut data_mgr, &un, data.clone());
             },
             _ => continue
@@ -78,7 +70,7 @@ fn main() {
     }
 }
 
-fn read_castles(data_mgr: &mut DataMgr, user: &str, data: gbd::Gbd){
+fn read_castles(data_mgr: &mut DataMgr, user: &str, data: gge::gbd::Gbd){
     let pid = data.gcl.find("PID").unwrap().as_u64().unwrap();
     let owner_name = user;
     let dcl = data.gcl.find("C").unwrap().as_array().unwrap();
