@@ -5,7 +5,7 @@ use std::io::Write;
 
 use gge::packet::Packet;
 use gge::connection::Connection;
-use gge::data::{Castle, World, DataMgr};
+use gge::data::DataMgr;
 
 fn main() {
     let mut data_mgr = DataMgr::new();
@@ -25,7 +25,7 @@ fn main() {
                 found_gbd_packet = true;
                 let data = &*data;
                 let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
-                read_castles(&mut data_mgr, &un, data.clone());
+                gge::read_castles(&mut data_mgr, &un, data.clone());
             },
             _ => continue
         };
@@ -70,7 +70,7 @@ fn main() {
     }
 }
 
-fn read_castles(data_mgr: &mut DataMgr, user: &str, data: gge::gbd::Gbd){
+/*fn read_castles(data_mgr: &mut DataMgr, user: &str, data: gge::gbd::Gbd){
     let pid = data.gcl.find("PID").unwrap().as_u64().unwrap();
     let owner_name = user;
     let dcl = data.gcl.find("C").unwrap().as_array().unwrap();
@@ -104,7 +104,7 @@ fn read_castles(data_mgr: &mut DataMgr, user: &str, data: gge::gbd::Gbd){
             data_mgr.add_castle(castle);
         }
     }
-}
+}*/
 
 fn env_or_ask(env_name: &str, question: &str) -> String{
     env::var(env_name).and_then(|data|{
