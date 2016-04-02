@@ -35,7 +35,7 @@ fn main() {
         println!("{:?}", castle);
     }
     
-    let file_name = env_or_ask("GGE_FILENAME", "Filename: ");
+    let file_name = env_or_default("GGE_FILENAME", "data.json");
     
     let mut f = std::fs::OpenOptions::new()
         .read(false)
@@ -82,5 +82,17 @@ fn env_or_ask(env_name: &str, question: &str) -> String{
         try!(io::stderr().write(question.as_bytes()));
         try!(io::stdin().read_line(&mut data));
         Ok(data.trim().to_owned())
+    }).unwrap()
+}
+
+fn env_or_default(env_name: &str, default: &str) -> String{
+    env::var(env_name).and_then(|data|{
+        if data.len() < 2{
+            Err(env::VarError::NotPresent)
+        }else{
+            Ok(data)
+        }
+    }).or_else(|_| -> Result<String,io::Error>{
+        Ok(default.trim().to_owned())
     }).unwrap()
 }
