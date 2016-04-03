@@ -13,7 +13,7 @@ impl Connection{
     ///Create a new connection
     pub fn new() -> Self {
         let stream = TcpStream::connect(("37.48.88.129",443)).unwrap();
-        stream.set_read_timeout(Some(::std::time::Duration::new(1,0))).unwrap();
+        stream.set_read_timeout(Some(::std::time::Duration::new(2,0))).unwrap();
         
         let mut con = Connection{ stream: stream };
         
