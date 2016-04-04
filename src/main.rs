@@ -19,7 +19,7 @@ fn main() {
     
     let mut found_gbd_packet = false;
     
-    for pkt in con.read_packets(false){
+    for pkt in con.read_packets(true){
         match pkt{
             Packet::Gbd(ref data) => {
                 found_gbd_packet = true;

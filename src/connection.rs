@@ -53,10 +53,9 @@ impl Connection{
         let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un) + "\0";
         
         self.send(&login_header);
-        self.recv(true);
+        self.read_packets(true);
         
         self.send(&login_code);
-        self.recv(true);
     }
     
     ///Read packets
@@ -65,15 +64,23 @@ impl Connection{
         let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
         let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
         
-        let data = splitter.map(|splited|String::from_utf8(splited.unwrap()).unwrap());
+        let data = splitter.map(|splited|String::from_utf8(splited.unwrap()).expect("Malformed utf8 data provided by the server"));
         
-        let data = data.map(move |text|{
-            if print{
-                println!("{}\n\n", text);
+        let data = data.map(Packet::new).filter(|packet|{
+            if let &Packet::Kpi(_) = packet{
+                false
+            }else{
+                true
             }
-            text
         });
 
-        Box::new(data.map(Packet::new))
+        let data = data.map(move |packet|{
+            if print{
+                println!("Packet received: {:?}\n", packet);
+            }
+            packet
+        });
+
+        Box::new(data)
     }
 }
