@@ -85,16 +85,40 @@ impl fmt::Display for Castle{
     }
 }
 
+///User data
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+pub struct User{
+    ///Internal id
+    pub id: u64,
+    ///Username
+    pub username: Option<String>
+}
+
+impl fmt::Display for User{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        let username = self.username.clone().unwrap_or(format!("{}", self.id));
+        
+        try!(write!(f, "{{"));
+        try!(write!(f, "\"name\": \"{}\",", username));
+        try!(write!(f, "\"id\": \"{}\" ", self.id));
+        write!(f, "}}")
+    }
+}
+
 ///Data manager
 pub struct DataMgr{
     ///List of castles
-    pub castles: HashMap<u64, Castle>
+    pub castles: HashMap<u64, Castle>,
+    pub users: HashMap<u64, User>,
 }
 
 impl DataMgr{
     ///Create new data manager
     pub fn new() -> Self{
-        DataMgr{ castles: HashMap::new() }
+        DataMgr{
+            castles: HashMap::new(),
+            users: HashMap::new(),
+        }
     }
     
     ///Add the data of the specified castle
@@ -118,6 +142,11 @@ impl DataMgr{
     
     ///Add the name of the specified user
     pub fn add_owner_name(&mut self, uid: u64, name: &str){
+        self.users.insert(uid, User{
+            id: uid,
+            username: Some(name.to_owned())
+        });
+        
         for (_, castle) in self.castles.iter_mut(){
             if castle.owner_id == Some(uid){
                 (*castle).owner_name = Some(name.to_string());
