@@ -41,6 +41,7 @@ fn main() {
         .read(false)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(file_name)
         .unwrap();
     
