@@ -6,6 +6,7 @@ use std::io::Write;
 use gge::packet::Packet;
 use gge::connection::Connection;
 use gge::data::DataMgr;
+use gge::format_json::format_json;
 
 fn main() {
     let mut data_mgr = DataMgr::new();
@@ -45,26 +46,7 @@ fn main() {
         .open(file_name)
         .unwrap();
     
-    write!(f, "[").unwrap();
-    
-    let mut iter = data_mgr.castles.values().peekable();
-    loop{
-        if let Some(castle) = iter.next(){
-            let has_next = match iter.peek(){
-                Some(_) => true,
-                None => false
-            };
-            write!(f, "{}{}\n", castle, if has_next{
-                ","
-            }else{
-                ""
-            }).unwrap();
-        }else{
-            break;
-        }
-    }
-    
-    write!(f, "]").unwrap();
+    write!(f, "{}", format_json(&data_mgr)).unwrap();
     
     if !found_gbd_packet{
         io::stderr().write(b"Login failed\n").unwrap();

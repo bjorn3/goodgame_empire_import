@@ -11,6 +11,8 @@ pub mod data;
 pub mod gbd;
 ///Goodgame empire connection
 pub mod connection;
+///Json formatter
+pub mod format_json;
 
 ///Read castles
 pub fn read_castles(data_mgr: &mut data::DataMgr, user: &str, data: gbd::Gbd){
