@@ -1,8 +1,11 @@
 use std::fmt;
 use std::collections::HashMap;
 
+use rustc_serialize::{Encoder, Encodable};
+use rustc_serialize::json::as_json;
+
 ///World
-#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, RustcEncodable)]
 pub enum World{
     ///Fire Peaks
     Fire,
@@ -64,29 +67,25 @@ pub struct Castle{
 
 impl fmt::Display for Castle{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        write!(f, "{}", as_json(self))
+    }
+}
+
+impl Encodable for Castle{
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error>{
+        let mut map = HashMap::new();
         let owner = self.owner_name.clone().unwrap_or(format!("{}", self.owner_id.unwrap_or(0)));
-        let name = self.name.clone().unwrap_or(format!("{}_{}", owner, self.id));
-        let x = match self.x{
-            Some(x) => x,
-            None => return Err(fmt::Error)
-        };
-        let y = match self.y{
-            Some(y) => y,
-            None => return Err(fmt::Error)
-        };
-        let world = self.world.unwrap_or(World::SpecialEvent);
-        try!(write!(f, "{}", "{"));
-        try!(write!(f, "\"name\": \"{}\",", name));
-        try!(write!(f, "\"owner\": \"{}\",", owner));
-        try!(write!(f, "\"X\": {},", x));
-        try!(write!(f, "\"Y\": {},", y));
-        try!(write!(f, "\"wereld\": \"{}\" ", world));
-        write!(f, "{}", "}")
+        map.insert("name", self.name.clone().unwrap_or(format!("{}_{}", owner, self.id)));
+        map.insert("owner", owner);
+        map.insert("X", format!("{}", self.x.expect("No X")));
+        map.insert("Y", format!("{}", self.y.expect("No Y")));
+        map.insert("wereld", format!("{}", self.world.unwrap_or(World::SpecialEvent)));
+        Encodable::encode(&map, s)
     }
 }
 
 ///User data
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable)]
 pub struct User{
     ///Internal id
     pub id: u64,
@@ -96,16 +95,12 @@ pub struct User{
 
 impl fmt::Display for User{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        let username = self.username.clone().unwrap_or(format!("{}", self.id));
-        
-        try!(write!(f, "{{"));
-        try!(write!(f, "\"name\": \"{}\",", username));
-        try!(write!(f, "\"id\": \"{}\" ", self.id));
-        write!(f, "}}")
+        write!(f, "{}", as_json(self))
     }
 }
 
 ///Data manager
+#[derive(RustcEncodable)]
 pub struct DataMgr{
     ///List of castles
     pub castles: HashMap<u64, Castle>,
