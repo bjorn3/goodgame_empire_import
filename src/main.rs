@@ -4,7 +4,7 @@ use std::io;
 use std::io::Write;
 
 use gge::as_json;
-use gge::packet::Packet;
+use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::Connection;
 use gge::data::DATAMGR;
 
@@ -20,7 +20,7 @@ fn main() {
     
     for pkt in con.read_packets(true){
         match pkt{
-            Packet::Gbd(ref data) => {
+            ServerPacket::Gbd(ref data) => {
                 found_gbd_packet = true;
                 let data = &*data;
                 let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
@@ -28,6 +28,26 @@ fn main() {
             },
             _ => continue
         };
+    }
+    
+    let users;
+    
+    {
+        let data_mgr = DATAMGR.lock().unwrap();
+        users = data_mgr.users.values().map(|user|user.clone()).collect::<Vec<_>>();
+    }
+    
+    for user in users{
+        con.send_packet(ClientPacket::Gdi(user.id));
+        for pkt in con.read_packets(true){
+            println!("{:?}", pkt);
+            match pkt{
+                ServerPacket::Gdi(data) => {
+                    gge::read_names(data);
+                }
+                _ => {}
+            }
+        }
     }
     
     for castle in DATAMGR.lock().unwrap().castles.values().take(20){

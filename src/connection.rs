@@ -2,7 +2,7 @@ use std::str;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
-use packet::Packet;
+use packet::{ServerPacket, ClientPacket};
 
 ///Goodgame empire connection
 pub struct Connection{
@@ -58,16 +58,20 @@ impl Connection{
         self.send(&login_code);
     }
     
+    pub fn send_packet(&mut self, packet: ClientPacket){
+        self.send(&packet.to_raw_data());
+    }
+    
     ///Read packets
-    pub fn read_packets(&mut self, print: bool) -> Box<Iterator<Item=Packet>>{
+    pub fn read_packets(&mut self, print: bool) -> Box<Iterator<Item=ServerPacket>>{
         static SPLIT: &'static [u8] = &[0x00];
         let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
         let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
         
         let data = splitter.map(|splited|String::from_utf8(splited.unwrap()).expect("Malformed utf8 data provided by the server"));
         
-        let data = data.map(Packet::new).filter(|packet|{
-            if let &Packet::Kpi(_) = packet{
+        let data = data.map(ServerPacket::new).filter(|packet|{
+            if let &ServerPacket::Kpi(_) = packet{
                 false
             }else{
                 true
