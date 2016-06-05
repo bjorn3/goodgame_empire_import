@@ -3,10 +3,10 @@ use std::env;
 use std::io;
 use std::io::Write;
 
+use gge::as_json;
 use gge::packet::Packet;
 use gge::connection::Connection;
 use gge::data::DataMgr;
-use gge::format_json::format_json;
 
 fn main() {
     let mut data_mgr = DataMgr::new();
@@ -36,7 +36,7 @@ fn main() {
         println!("{:?}", castle);
     }
     
-    let file_name = env_or_default("GGE_FILENAME", "data.json");
+    let file_name = env_or_default("GGE_FILENAME", "data2.json");
     
     let mut f = std::fs::OpenOptions::new()
         .read(false)
@@ -46,7 +46,7 @@ fn main() {
         .open(file_name)
         .unwrap();
     
-    write!(f, "{}", format_json(&data_mgr)).unwrap();
+    write!(f, "{}", as_json(&data_mgr)).unwrap();
     
     if !found_gbd_packet{
         io::stderr().write(b"Login failed\n").unwrap();

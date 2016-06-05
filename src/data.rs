@@ -33,21 +33,8 @@ impl World{
     }
 }
 
-impl fmt::Display for World{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        let data = match *self{
-            World::Grass => "gras".to_string(),
-            World::Sand => "zand".to_string(),
-            World::Ice => "ijs".to_string(),
-            World::Fire => "vuur".to_string(),
-            _ => "Unknown world".to_string()
-        };
-        write!(f, "{}", data)
-    }
-}
-
 ///Castle data
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable)]
 pub struct Castle{
     ///Internal id
     pub id: u64,
@@ -63,25 +50,6 @@ pub struct Castle{
     pub y: Option<u64>,
     ///World
     pub world: Option<World>,
-}
-
-impl fmt::Display for Castle{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        write!(f, "{}", as_json(self))
-    }
-}
-
-impl Encodable for Castle{
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error>{
-        let mut map = HashMap::new();
-        let owner = self.owner_name.clone().unwrap_or(format!("{}", self.owner_id.unwrap_or(0)));
-        map.insert("name", self.name.clone().unwrap_or(format!("{}_{}", owner, self.id)));
-        map.insert("owner", owner);
-        map.insert("X", format!("{}", self.x.expect("No X")));
-        map.insert("Y", format!("{}", self.y.expect("No Y")));
-        map.insert("wereld", format!("{}", self.world.unwrap_or(World::SpecialEvent)));
-        Encodable::encode(&map, s)
-    }
 }
 
 ///User data
