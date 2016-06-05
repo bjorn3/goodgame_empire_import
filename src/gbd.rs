@@ -14,11 +14,11 @@ macro_rules! try_field{
 ///Can parse castles
 pub trait CastleParse{
     ///Parse castle
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Result<Self, Error> where Self: Sized;
+    fn parse(json: &Json, owner_id: u64) -> Result<Self, Error> where Self: Sized;
 }
 
 impl CastleParse for Castle{
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Result<Castle, Error>{
+    fn parse(json: &Json, owner_id: u64) -> Result<Castle, Error>{
         if !json.is_array(){
             return Err(Error::InvalidFormat);
         }
@@ -30,29 +30,13 @@ impl CastleParse for Castle{
             return Err(Error::InvalidFormat);
         }
         
-        let world = if !gcl && world == None{
-            json[0].as_u64().and_then(|world| Some(World::from_int(world)) )
-        }else{
-            world
-        };
+        let world = json[0].as_u64().and_then(|world| Some(World::from_int(world)) );
         
-        let (id, name, x, y) = if gcl{
-            (
-                json[3].as_u64().unwrap(),
-                Some(json[10].as_string().unwrap().to_owned()),
-                json[1].as_u64(),
-                json[2].as_u64()
-            )
-        }else{
-            (
-                json[1].as_u64().unwrap(),
-                None,
-                json[2].as_u64(),
-                json[3].as_u64()
-            )
-        };
+        let id = json[1].as_u64().unwrap();
+        let x = json[2].as_u64();
+        let y = json[3].as_u64();
         
-        Ok(Castle{ id: id, owner_id: Some(owner_id), name: name, x: x, y: y, world: world })
+        Ok(Castle{ id: id, owner_id: Some(owner_id), name: None, x: x, y: y, world: world })
     }
 }
 
@@ -85,13 +69,13 @@ impl FieldAinM{
             DATAMGR.lock().unwrap().add_owner_name(oid, &n);
             
             let ap = row.get("AP").unwrap().as_array().unwrap();
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle.map_err(|err|{
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid)).filter_map(|castle|castle.map_err(|err|{
                 println!("{}", err);
                 err
             }).ok()).collect::<Vec<Castle>>();
             
             let vp = row.get("VP").unwrap().as_array().unwrap();
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle.map_err(|err|{
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid)).filter_map(|castle|castle.map_err(|err|{
                 println!("{}", err);
                 err
             }).ok()).collect::<Vec<Castle>>();
@@ -106,8 +90,6 @@ impl FieldAinM{
 pub struct Gbd{
     ///User data
     pub gpi: String,
-    ///Own castles
-    pub gcl: Json,
     ///Alliance member castles
     pub ain: Vec<FieldAinM>
 }
@@ -124,10 +106,9 @@ impl Gbd{
         let mut data = data.as_object().unwrap().clone();
         data.remove("acl"); // remove chat from output
         let gpi = try_field!(data, "gpi");
-        let gcl = data.get("gcl");
         let ain = json_data.find_path(&["ain", "A", "M"]).unwrap(); // ain A M
         let ain = FieldAinM::parse(ain).unwrap();
-        let gbd = Gbd{gpi: gpi.unwrap(), gcl: gcl.unwrap().clone(), ain: ain};
+        let gbd = Gbd{gpi: gpi.unwrap(), ain: ain};
         Ok(gbd)
     }
 }
