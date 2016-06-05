@@ -1,8 +1,15 @@
 use std::fmt;
 use std::collections::HashMap;
+use std::sync::Mutex;
 
 use rustc_serialize::{Encoder, Encodable};
 use rustc_serialize::json::as_json;
+
+lazy_static!{
+    pub static ref DATAMGR: Mutex<DataMgr> = {
+        Mutex::new(DataMgr::new())
+    };
+}
 
 ///World
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, RustcEncodable)]

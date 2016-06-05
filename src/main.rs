@@ -6,11 +6,9 @@ use std::io::Write;
 use gge::as_json;
 use gge::packet::Packet;
 use gge::connection::Connection;
-use gge::data::DataMgr;
+use gge::data::DATAMGR;
 
 fn main() {
-    let mut data_mgr = DataMgr::new();
-
     let mut con = Connection::new();
     
     io::stderr().write(b"Please login\n").unwrap();
@@ -26,13 +24,13 @@ fn main() {
                 found_gbd_packet = true;
                 let data = &*data;
                 let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
-                gge::read_castles(&mut data_mgr, &un, data.clone());
+                gge::read_castles(&un, data.clone());
             },
             _ => continue
         };
     }
     
-    for castle in data_mgr.castles.values().take(20){
+    for castle in DATAMGR.lock().unwrap().castles.values().take(20){
         println!("{:?}", castle);
     }
     
@@ -46,7 +44,7 @@ fn main() {
         .open(file_name)
         .unwrap();
     
-    write!(f, "{}", as_json(&data_mgr)).unwrap();
+    write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
     
     if !found_gbd_packet{
         io::stderr().write(b"Login failed\n").unwrap();

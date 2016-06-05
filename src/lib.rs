@@ -1,5 +1,9 @@
 extern crate rustc_serialize;
 extern crate byte_stream_splitter;
+#[macro_use]
+extern crate lazy_static;
+
+use data::DATAMGR;
 
 pub use rustc_serialize::json::as_json;
 
@@ -15,7 +19,7 @@ pub mod gbd;
 pub mod connection;
 
 ///Read castles
-pub fn read_castles(data_mgr: &mut data::DataMgr, user: &str, data: gbd::Gbd){
+pub fn read_castles(user: &str, data: gbd::Gbd){
     let pid = data.gcl.find("PID").unwrap().as_u64().unwrap();
     let owner_name = user;
     let dcl = data.gcl.find("C").unwrap().as_array().unwrap();
@@ -37,16 +41,16 @@ pub fn read_castles(data_mgr: &mut data::DataMgr, user: &str, data: gbd::Gbd){
                 y: castle[2].as_u64(),
                 world: Some(world_name)
             };
-            data_mgr.add_castle(castle);
+            DATAMGR.lock().unwrap().add_castle(castle);
         }
     }
 
     for ain in data.ain{
         for castle in ain.ap{
-            data_mgr.add_castle(castle);
+            DATAMGR.lock().unwrap().add_castle(castle);
         }
         for castle in ain.vp{
-            data_mgr.add_castle(castle);
+            DATAMGR.lock().unwrap().add_castle(castle);
         }
     }
 }
