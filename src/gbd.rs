@@ -5,6 +5,7 @@ use rustc_serialize::json::Json;
 use error::Error;
 use data::Castle;
 use data::World;
+use data::DATAMGR;
 
 macro_rules! try_field{
     ($data: expr, $field: expr) => {
@@ -15,11 +16,11 @@ macro_rules! try_field{
 ///Can parse castles
 pub trait CastleParse{
     ///Parse castle
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Result<Self, Error> where Self: Sized;
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Result<Self, Error> where Self: Sized;
 }
 
 impl CastleParse for Castle{
-    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>, owner_name: Option<String>) -> Result<Castle, Error>{
+    fn parse(json: &Json, gcl: bool, owner_id: u64, world: Option<World>) -> Result<Castle, Error>{
         if !json.is_array(){
             return Err(Error::InvalidFormat);
         }
@@ -53,7 +54,7 @@ impl CastleParse for Castle{
             )
         };
         
-        Ok(Castle{ id: id, owner_id: Some(owner_id), owner_name: owner_name, name: name, x: x, y: y, world: world })
+        Ok(Castle{ id: id, owner_id: Some(owner_id), name: name, x: x, y: y, world: world })
     }
 }
 
@@ -83,14 +84,16 @@ impl FieldAinM{
             let oid = row.get("OID").unwrap().as_u64().unwrap();
             let n = row.get("N").unwrap().as_string().unwrap().to_owned();
             
+            DATAMGR.lock().unwrap().add_owner_name(oid, &n);
+            
             let ap = row.get("AP").unwrap().as_array().unwrap();
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle.map_err(|err|{
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle.map_err(|err|{
                 println!("{}", err);
                 err
             }).ok()).collect::<Vec<Castle>>();
             
             let vp = row.get("VP").unwrap().as_array().unwrap();
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None, Some(n.clone()))).filter_map(|castle|castle.map_err(|err|{
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, false, oid, None)).filter_map(|castle|castle.map_err(|err|{
                 println!("{}", err);
                 err
             }).ok()).collect::<Vec<Castle>>();

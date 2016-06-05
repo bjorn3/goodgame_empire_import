@@ -47,8 +47,6 @@ pub struct Castle{
     pub id: u64,
     ///Internal owner id
     pub owner_id: Option<u64>,
-    ///Owner name
-    pub owner_name: Option<String>,
     ///Castle name
     pub name: Option<String>,
     ///X position
@@ -98,7 +96,6 @@ impl DataMgr{
         match old_castle{
             Some(old_castle) => {
                 castle.owner_id = castle.owner_id.or(old_castle.owner_id);
-                castle.owner_name = castle.owner_name.or(old_castle.owner_name);
                 castle.name = castle.name.or(old_castle.name);
                 castle.x = castle.x.or(old_castle.x);
                 castle.y = castle.y.or(old_castle.y);
@@ -112,15 +109,9 @@ impl DataMgr{
     
     ///Add the name of the specified user
     pub fn add_owner_name(&mut self, uid: u64, name: &str){
-        self.users.insert(uid, User{
+        self.users.entry(uid).or_insert(User{
             id: uid,
             username: Some(name.to_owned())
         });
-        
-        for (_, castle) in self.castles.iter_mut(){
-            if castle.owner_id == Some(uid){
-                (*castle).owner_name = Some(name.to_string());
-            }
-        }
     }
 }

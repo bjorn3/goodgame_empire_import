@@ -24,7 +24,7 @@ fn main() {
                 found_gbd_packet = true;
                 let data = &*data;
                 let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
-                gge::read_castles(&un, data.clone());
+                gge::read_castles(data.clone());
             },
             _ => continue
         };
