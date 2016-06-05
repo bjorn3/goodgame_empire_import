@@ -30,11 +30,11 @@ impl CastleParse for Castle{
             return Err(Error::InvalidFormat);
         }
         
-        let world = json[0].as_u64().and_then(|world| Some(World::from_int(world)) );
+        let world = json[0].as_u64().and_then(|world| Some(World::from_int(world)) ); // ain A M [] AP/VP [0] (world)
         
-        let id = json[1].as_u64().unwrap();
-        let x = json[2].as_u64();
-        let y = json[3].as_u64();
+        let id = json[1].as_u64().unwrap(); // ain A M [] AP/VP [1] (id)
+        let x = json[2].as_u64(); // ain A M [] AP/VP [2] (x)
+        let y = json[3].as_u64(); // ain A M [] AP/VP [3] (y)
         
         Ok(Castle{ id: id, owner_id: Some(owner_id), name: None, x: x, y: y, world: world })
     }
@@ -63,18 +63,18 @@ impl FieldAinM{
         return Ok(json.into_iter().map(|row|{
             let row = row.as_object().unwrap();
             
-            let oid = row.get("OID").unwrap().as_u64().unwrap();
-            let n = row.get("N").unwrap().as_string().unwrap().to_owned();
+            let oid = row.get("OID").unwrap().as_u64().unwrap(); // ain A M [] OID
+            let n = row.get("N").unwrap().as_string().unwrap().to_owned(); // ain A M [] N (username)
             
             DATAMGR.lock().unwrap().add_owner_name(oid, &n);
             
-            let ap = row.get("AP").unwrap().as_array().unwrap();
+            let ap = row.get("AP").unwrap().as_array().unwrap(); // ain A M [] AP (base castles)
             let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid)).filter_map(|castle|castle.map_err(|err|{
                 println!("{}", err);
                 err
             }).ok()).collect::<Vec<Castle>>();
             
-            let vp = row.get("VP").unwrap().as_array().unwrap();
+            let vp = row.get("VP").unwrap().as_array().unwrap(); // ain A M [] VP (support castles)
             let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid)).filter_map(|castle|castle.map_err(|err|{
                 println!("{}", err);
                 err
