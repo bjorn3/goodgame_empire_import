@@ -73,7 +73,7 @@ impl fmt::Display for User{
 }
 
 ///Data manager
-#[derive(RustcEncodable)]
+#[derive(Debug, RustcEncodable)]
 pub struct DataMgr{
     ///List of castles
     pub castles: HashMap<u64, Castle>,

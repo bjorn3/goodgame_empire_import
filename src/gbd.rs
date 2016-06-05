@@ -1,5 +1,3 @@
-use std::fmt;
-
 use rustc_serialize::json::Json;
 
 use error::Error;
@@ -103,24 +101,6 @@ impl FieldAinM{
     }
 }
 
-impl fmt::Display for FieldAinM{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        try!(write!(f, "{} ", "{"));
-        try!(write!(f, "oid: {}, ", self.oid));
-        try!(write!(f, "n: \"{}\", ", self.n));
-        try!(write!(f, "ap: ["));
-        for row in &self.ap{
-            try!(write!(f, "{:?},\n", row));
-        }
-        try!(write!(f, "],\n"));
-        try!(write!(f, "vp: ["));
-        for row in &self.vp{
-            try!(write!(f, "{:?},\n", row));
-        }
-        write!(f, "]\n")
-    }
-}
-
 ///Main data
 #[derive(Debug, Clone)]
 pub struct Gbd{
@@ -149,19 +129,5 @@ impl Gbd{
         let ain = FieldAinM::parse(ain).unwrap();
         let gbd = Gbd{gpi: gpi.unwrap(), gcl: gcl.unwrap().clone(), ain: ain};
         Ok(gbd)
-    }
-}
-
-impl fmt::Display for Gbd{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        try!(write!(f, "{} ", "{"));
-        try!(write!(f, "gpi: {}, ", self.gpi));
-        try!(write!(f, "gcl: {}, ", self.gcl));
-        try!(write!(f, "ain: ["));
-        for row in &self.ain{
-            try!(write!(f, "{}, \n", row));
-        }
-        try!(write!(f, "]"));
-        write!(f, "{}", "}")
     }
 }
