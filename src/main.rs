@@ -1,12 +1,18 @@
+#[macro_use] extern crate lazy_static;
 extern crate goodgame_empire_import as gge;
 use std::env;
 use std::io;
 use std::io::Write;
+use std::sync::Mutex;
 
 use gge::as_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::Connection;
 use gge::data::DATAMGR;
+
+lazy_static!{
+    static ref FOUNDGBDPACKET: Mutex<bool> = Mutex::new(false);
+}
 
 fn main() {
     let mut con = Connection::new();
@@ -16,18 +22,8 @@ fn main() {
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
     con.login(&un, &pw);
     
-    let mut found_gbd_packet = false;
-    
     for pkt in con.read_packets(true){
-        match pkt{
-            ServerPacket::Gbd(ref data) => {
-                found_gbd_packet = true;
-                let data = &*data;
-                let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
-                gge::read_castles(data.clone());
-            },
-            _ => continue
-        };
+        process_packet(pkt);
     }
     
     let users;
@@ -40,13 +36,7 @@ fn main() {
     for user in users{
         con.send_packet(ClientPacket::Gdi(user.id));
         for pkt in con.read_packets(true){
-            println!("{:?}", pkt);
-            match pkt{
-                ServerPacket::Gdi(data) => {
-                    gge::read_names(data);
-                }
-                _ => {}
-            }
+            process_packet(pkt);
         }
     }
     
@@ -66,9 +56,24 @@ fn main() {
     
     write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
     
-    if !found_gbd_packet{
+    if !*FOUNDGBDPACKET.lock().unwrap(){
         io::stderr().write(b"Login failed\n").unwrap();
     }
+}
+
+fn process_packet(pkt: ServerPacket){
+    match pkt{
+        ServerPacket::Gbd(ref data) => {
+            let data = &*data;
+            let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
+            gge::read_castles(data.clone());
+            *FOUNDGBDPACKET.lock().unwrap() = true;
+        },
+        ServerPacket::Gdi(data) => {
+            gge::read_names(data);
+        },
+        _ => {}
+    };
 }
 
 fn env_or_ask(env_name: &str, question: &str) -> String{
