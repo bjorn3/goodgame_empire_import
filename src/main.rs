@@ -23,21 +23,7 @@ fn main() {
     con.login(&un, &pw);
     
     for pkt in con.read_packets(true){
-        process_packet(pkt);
-    }
-    
-    let users;
-    
-    {
-        let data_mgr = DATAMGR.lock().unwrap();
-        users = data_mgr.users.values().map(|user|user.clone()).collect::<Vec<_>>();
-    }
-    
-    for user in users{
-        con.send_packet(ClientPacket::Gdi(user.id));
-        for pkt in con.read_packets(true){
-            process_packet(pkt);
-        }
+        process_packet(&mut con, pkt);
     }
     
     for castle in DATAMGR.lock().unwrap().castles.values().take(20){
@@ -61,13 +47,19 @@ fn main() {
     }
 }
 
-fn process_packet(pkt: ServerPacket){
+fn process_packet(con: &mut Connection, pkt: ServerPacket){
     match pkt{
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
             let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
             gge::read_castles(data.clone());
             *FOUNDGBDPACKET.lock().unwrap() = true;
+
+            let data_mgr = DATAMGR.lock().unwrap();
+            let users = data_mgr.users.values().map(|user|user.clone()).collect::<Vec<_>>();
+            for user in users{
+                con.send_packet(ClientPacket::Gdi(user.id));
+            }
         },
         ServerPacket::Gdi(data) => {
             gge::read_names(data);
