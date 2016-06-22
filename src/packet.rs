@@ -34,7 +34,7 @@ impl ServerPacket{
 
 impl fmt::Debug for ServerPacket{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        let (name, data): (&'static str, &str) = match *self{
+        let (name, _data): (&'static str, &str) = match *self{
             ServerPacket::Data(ref data) => ("data", data),
             ServerPacket::Kpi(ref data) => ("kpi", data),
             ServerPacket::Gam(ref data) => ("gam", data),
@@ -42,7 +42,8 @@ impl fmt::Debug for ServerPacket{
             ServerPacket::Gdi(ref data) => ("gdi", data),
             ServerPacket::None => ("none", "")
         };
-        write!(f, "{}: {}\n", name, data)
+        //write!(f, "{} ( {} )\n\n", name, _data)
+        write!(f, "{}", name)
     }
 }
 

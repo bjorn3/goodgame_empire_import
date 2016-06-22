@@ -82,7 +82,7 @@ impl Connection{
 
         let data = data.map(move |packet|{
             if print{
-                println!("Packet received: {:?}\n", packet);
+                println!("Packet received: {:?}", packet);
             }
             packet
         });
