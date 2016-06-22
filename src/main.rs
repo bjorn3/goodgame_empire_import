@@ -7,7 +7,7 @@ use std::sync::Mutex;
 
 use gge::as_json;
 use gge::packet::{ServerPacket, ClientPacket};
-use gge::connection::Connection;
+use gge::connection::{Connection, DUTCH_SERVER};
 use gge::data::DATAMGR;
 
 lazy_static!{
@@ -15,12 +15,11 @@ lazy_static!{
 }
 
 fn main() {
-    let mut con = Connection::new();
-    
     io::stderr().write(b"Please login\n").unwrap();
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
-    con.login(&un, &pw);
+
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw);
     
     for pkt in con.read_packets(true){
         process_packet(&mut con, pkt);

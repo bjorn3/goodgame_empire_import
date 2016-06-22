@@ -1,6 +1,6 @@
 use std::str;
 use std::io::prelude::*;
-use std::net::TcpStream;
+use std::net::{TcpStream, IpAddr, Ipv4Addr};
 
 use packet::{ServerPacket, ClientPacket};
 
@@ -9,10 +9,15 @@ pub struct Connection{
     stream: TcpStream
 }
 
+lazy_static!{
+    /// The Dutch server (37.48.88.129)
+    pub static ref DUTCH_SERVER: IpAddr = IpAddr::V4(Ipv4Addr::new(37, 48, 88, 129));
+}
+
 impl Connection{
     ///Create a new connection
-    pub fn new() -> Self {
-        let stream = TcpStream::connect(("37.48.88.129",443)).unwrap();
+    pub fn new(server: IpAddr, un: &str, pw: &str) -> Self {
+        let stream = TcpStream::connect((server, 443)).unwrap();
         stream.set_read_timeout(Some(::std::time::Duration::new(2,0))).unwrap();
         
         let mut con = Connection{ stream: stream };
@@ -23,6 +28,14 @@ impl Connection{
         if header != "<msg t='sys'><body action='apiOK' r='0'></body></msg>"{
             panic!("Prelogin error: received unexpected result: {}", header);
         }
+
+        let login_header = r##"<msg t='sys'><body action='login' r='0'><login z='EmpireEx_11'><nick><![CDATA[]]></nick><pword><![CDATA[1455712286016%nl%]]></pword></login></body></msg>"##.to_string() + "\0";
+        let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un) + "\0";
+
+        con.send(&login_header);
+        con.read_packets(true);
+
+        con.send(&login_code);
 
         con
     }
@@ -46,18 +59,7 @@ impl Connection{
     }
 
     // clean connection
-    
-    ///Login
-    pub fn login(&mut self, un: &str, pw: &str){
-        let login_header = r##"<msg t='sys'><body action='login' r='0'><login z='EmpireEx_11'><nick><![CDATA[]]></nick><pword><![CDATA[1455712286016%nl%]]></pword></login></body></msg>"##.to_string() + "\0";
-        let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un) + "\0";
-        
-        self.send(&login_header);
-        self.read_packets(true);
-        
-        self.send(&login_code);
-    }
-    
+
     pub fn send_packet(&mut self, packet: ClientPacket){
         self.send(&packet.to_raw_data());
     }
