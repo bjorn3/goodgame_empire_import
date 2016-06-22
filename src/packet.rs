@@ -8,18 +8,31 @@ macro_rules! try_packet{
     };
 }
 
-///A server returned packet of data
+/// A server returned packet of data.
 pub enum ServerPacket{
+    /// Unrecognized data
     Data(String),
+
+    /// Kpi packet
     Kpi(String),
+
+    /// Gam packet
     Gam(String),
+
+    /// Main data source.
+    /// Send by the server when you login.
 	Gbd(String),
+
+    /// Castle information of a specific user.
     Gdi(String),
+
+    /// Empty packet.
     None
 }
 
 impl ServerPacket{
-    ///Create a packet from text
+    /// Create a packet from text.
+    /// Returns ServerPacket::Data when it does not recognize the data.
     pub fn new(data: String) -> Self{
         if data.is_empty(){
             return ServerPacket::None;
@@ -50,7 +63,7 @@ impl fmt::Debug for ServerPacket{
 ///A client send packet of data
 #[derive(Debug)]
 pub enum ClientPacket{
-    //Ask for user castles
+    ///Ask for user castles
     Gdi(u64),
     None
 }
