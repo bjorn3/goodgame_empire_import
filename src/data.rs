@@ -80,6 +80,16 @@ pub struct DataMgr{
     pub users: HashMap<u64, User>,
 }
 
+macro_rules! same{
+    ($a:expr, $b:expr, $field:ident) => {
+        if !$b.is_none(){
+            if let (Some(a), Some(b)) = ($a.$field, $b.unwrap().$field){
+                assert_eq!(a, b);
+            }
+        }
+    }
+}
+
 impl DataMgr{
     ///Create new data manager
     pub fn new() -> Self{
@@ -93,6 +103,13 @@ impl DataMgr{
     pub fn add_castle(&mut self, castle: Castle) -> Castle{
         let mut castle = castle;
         let old_castle = self.castles.remove(&castle.id);
+
+        same!(castle.clone(), old_castle.clone(), owner_id);
+        same!(castle.clone(), old_castle.clone(), name);
+        same!(castle.clone(), old_castle.clone(), x);
+        same!(castle.clone(), old_castle.clone(), y);
+        same!(castle.clone(), old_castle.clone(), world);
+
         match old_castle{
             Some(old_castle) => {
                 castle.owner_id = castle.owner_id.or(old_castle.owner_id);

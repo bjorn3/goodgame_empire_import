@@ -1,7 +1,5 @@
 use std::fmt;
 
-use rustc_serialize::json::Json;
-
 macro_rules! try_packet{
     ($data: expr, $reg: expr, $variant: expr) => {
         if $data.find($reg) == Some(0){
@@ -44,12 +42,7 @@ impl fmt::Debug for ServerPacket{
             ServerPacket::Gdi(ref data) => ("gdi", data),
             ServerPacket::None => ("none", "")
         };
-        try!(write!(f, "{}: {}\n", name, data));
-        if name == "gdi"{
-            write!(f, "{:#?}", Json::from_str(data.trim_right_matches('%')).unwrap_or(Json::String(data.to_string())))
-        }else{
-            Ok(())
-        }
+        write!(f, "{}: {}\n", name, data)
     }
 }
 
