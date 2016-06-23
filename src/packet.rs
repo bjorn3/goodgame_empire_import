@@ -26,6 +26,12 @@ pub enum ServerPacket{
     /// Castle information of a specific user.
     Gdi(String),
 
+    /// Unknown kind of data
+    Sei(String),
+
+    /// Some kind of keepalive data.
+    Irc(String),
+
     /// Empty packet.
     None
 }
@@ -37,10 +43,14 @@ impl ServerPacket{
         if data.is_empty(){
             return ServerPacket::None;
         }
-        try_packet!(data, "%xt%kpi%1%0%", ServerPacket::Kpi);
-        try_packet!(data, "%xt%gam%1%0%", ServerPacket::Gam);
-		try_packet!(data, "%xt%gbd%1%0%", ServerPacket::Gbd);
-		try_packet!(data, "%xt%gdi%1%0%", ServerPacket::Gdi);
+        let data = data.trim_left_matches("%xt%").to_string();
+
+        try_packet!(data, "kpi%1%0%", ServerPacket::Kpi);
+        try_packet!(data, "gam%1%0%", ServerPacket::Gam);
+		try_packet!(data, "gbd%1%0%", ServerPacket::Gbd);
+		try_packet!(data, "gdi%1%0%", ServerPacket::Gdi);
+        try_packet!(data, "irc%1%0%", ServerPacket::Irc);
+        try_packet!(data, "sei%1%0%", ServerPacket::Sei);
         ServerPacket::Data(data)
     }
 }
@@ -49,14 +59,15 @@ impl fmt::Debug for ServerPacket{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
         let (name, _data): (&'static str, &str) = match *self{
             ServerPacket::Data(ref data) => ("data", data),
-            ServerPacket::Kpi(ref data) => ("kpi", data),
-            ServerPacket::Gam(ref data) => ("gam", data),
-	        ServerPacket::Gbd(ref data) => ("gbd", data),
-            ServerPacket::Gdi(ref data) => ("gdi", data),
+            ServerPacket::Kpi(ref data) => ("kpi ", data),
+            ServerPacket::Gam(ref data) => ("gam ", data),
+	        ServerPacket::Gbd(ref data) => ("gbd ", data),
+            ServerPacket::Gdi(ref data) => ("gdi ", data),
+            ServerPacket::Sei(ref data) => ("sei ", data),
+            ServerPacket::Irc(_) => return write!(f, "ping"),
             ServerPacket::None => ("none", "")
         };
-        //write!(f, "{} ( {} )\n\n", name, _data)
-        write!(f, "{}", name)
+        write!(f, "{} ( {} ... )", name, _data.chars().zip(0..64).map(|c|c.0).collect::<String>())
     }
 }
 

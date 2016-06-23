@@ -25,6 +25,8 @@ fn main() {
         process_packet(&mut con, pkt);
     }
     
+    println!("");
+
     for castle in DATAMGR.lock().unwrap().castles.values().take(20){
         println!("{:?}", castle);
     }
