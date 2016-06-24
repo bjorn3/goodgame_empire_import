@@ -64,7 +64,7 @@ impl fmt::Debug for ServerPacket{
 	        ServerPacket::Gbd(ref data) => ("gbd ", data),
             ServerPacket::Gdi(ref data) => ("gdi ", data),
             ServerPacket::Sei(ref data) => ("sei ", data),
-            ServerPacket::Irc(_) => return write!(f, "ping"),
+            ServerPacket::Irc(ref data) => ("irc ", data),
             ServerPacket::None => ("none", "")
         };
         write!(f, "{} ( {} ... )", name, _data.chars().zip(0..64).map(|c|c.0).collect::<String>())

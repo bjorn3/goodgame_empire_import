@@ -73,14 +73,13 @@ impl Connection{
         let data = splitter.map(|splited|String::from_utf8(splited.unwrap()).expect("Malformed utf8 data provided by the server"));
         
         let data = data.map(ServerPacket::new).filter(|packet|{
-            if let &ServerPacket::Kpi(_) = packet{
-                false
-            }else{
-                true
+            // Ignore kpi and irc packets
+            match *packet{
+                ServerPacket::Kpi(_) |
+                ServerPacket::Irc(_) => false,
+                _ => true
             }
-        });
-
-        let data = data.map(move |packet|{
+        }).map(move |packet|{
             println!("Packet received: {:?}", packet);
             packet
         });
