@@ -3,16 +3,11 @@ extern crate goodgame_empire_import as gge;
 use std::env;
 use std::io;
 use std::io::Write;
-use std::sync::Mutex;
 
 use gge::as_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};
 use gge::data::DATAMGR;
-
-lazy_static!{
-    static ref FOUNDGBDPACKET: Mutex<bool> = Mutex::new(false);
-}
 
 fn main() {
     io::stderr().write(b"Please login\n").unwrap();
@@ -21,7 +16,7 @@ fn main() {
 
     let mut con = Connection::new(*DUTCH_SERVER, &un, &pw);
     
-    for pkt in con.read_packets(true){
+    for pkt in con.read_packets(){
         process_packet(&mut con, pkt);
     }
     
@@ -42,10 +37,6 @@ fn main() {
         .unwrap();
     
     write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
-    
-    if !*FOUNDGBDPACKET.lock().unwrap(){
-        io::stderr().write(b"Login failed\n").unwrap();
-    }
 }
 
 fn process_packet(con: &mut Connection, pkt: ServerPacket){
@@ -54,7 +45,6 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket){
             let data = &*data;
             let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
             gge::read_castles(data.clone());
-            *FOUNDGBDPACKET.lock().unwrap() = true;
 
             let data_mgr = DATAMGR.lock().unwrap();
             let users = data_mgr.users.values().map(|user|user.clone()).collect::<Vec<_>>();

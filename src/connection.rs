@@ -23,7 +23,7 @@ impl Connection{
         let mut con = Connection{ stream: stream };
         
         let _ = con.send("<msg t='sys'><body action='verChk' r='0'><ver v='166' /></body></msg>\0");
-        let header = con.recv(true);
+        let header = con.recv();
         
         if header != "<msg t='sys'><body action='apiOK' r='0'></body></msg>"{
             panic!("Prelogin error: received unexpected result: {}", header);
@@ -33,7 +33,7 @@ impl Connection{
         let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un) + "\0";
 
         con.send(&login_header);
-        con.read_packets(true);
+        con.read_packets();
 
         con.send(&login_code);
 
@@ -46,14 +46,14 @@ impl Connection{
         println!("Data sent:     {}", data);
     }
 
-    fn recv(&mut self, print: bool) -> String{
+    fn recv(&mut self) -> String{
         let mut data = [0;8192];
         
         self.stream.read(&mut data).unwrap();
         
         let data = str::from_utf8(&data).expect("Malformed utf8 data provided by the server").trim_matches('\0');
         
-        if print{ println!("Data received: {}", data) };
+        println!("Data received: {}", data);
 
         String::from(data)
     }
@@ -65,7 +65,7 @@ impl Connection{
     }
     
     ///Read packets
-    pub fn read_packets(&mut self, print: bool) -> Box<Iterator<Item=ServerPacket>>{
+    pub fn read_packets(&mut self) -> Box<Iterator<Item=ServerPacket>>{
         static SPLIT: &'static [u8] = &[0x00];
         let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
         let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
@@ -81,9 +81,7 @@ impl Connection{
         });
 
         let data = data.map(move |packet|{
-            if print{
-                println!("Packet received: {:?}", packet);
-            }
+            println!("Packet received: {:?}", packet);
             packet
         });
 
