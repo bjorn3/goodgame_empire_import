@@ -28,7 +28,8 @@ impl Connection{
         if header != "<msg t='sys'><body action='apiOK' r='0'></body></msg>"{
             panic!("Prelogin error: received unexpected result: {}", header);
         }
-
+        //                                                                       room                                                  02/17/2016 @ 12:31pm (UTC) unix timestamp with 3 extra digits
+        //                                                                       v                                                     v
         let login_header = r##"<msg t='sys'><body action='login' r='0'><login z='EmpireEx_11'><nick><![CDATA[]]></nick><pword><![CDATA[1455712286016%nl%]]></pword></login></body></msg>"##.to_string() + "\0";
         let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un) + "\0";
 
