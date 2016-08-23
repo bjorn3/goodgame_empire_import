@@ -84,7 +84,7 @@ impl ClientPacket{
         match *self{
             ClientPacket::None => String::new(),
             ClientPacket::Gdi(uid) => {
-                format!("%xt%EmpireEx_11%gdi%1%{{\"PID\":{}}}%\0", uid)
+                format!("%xt%EmpireEx_11%gdi%1%{{\"PID\":{}}}%", uid)
             }
         }
     }
