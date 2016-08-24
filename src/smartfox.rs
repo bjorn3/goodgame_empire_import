@@ -13,6 +13,7 @@ impl fmt::Debug for SmartFoxPacket{
     }
 }
 
+/// Create a SmartFoxServer packet from a string
 #[allow(non_snake_case)]
 pub fn SmartFoxPacket<T>(data: T) -> SmartFoxPacket where T: Into<String>{
     SmartFoxPacket{
@@ -26,8 +27,27 @@ pub struct SmartFoxClient{
 }
 
 impl SmartFoxClient{
-    ///Create a new connection
-    pub fn new(stream: TcpStream, room: &str, un: &str, pw: &str) -> Self {
+    /// Create a new connection
+    ///
+    ///# Sends and receives
+    ///## check version:
+    ///
+    /// ```xml
+    /// send: <msg t='sys'><body action='verChk' r='0'><ver v='166' /></body></msg>
+    /// recv: <msg t='sys'><body action='apiOK' r='0'></body></msg>
+    /// ```
+    ///
+    ///## login
+    ///
+    /// ```xml
+    /// send: <msg t='sys'><body action='login' r='0'>
+    ///           <login z='<#room#>'>
+    ///               <nick><![CDATA[<#username#>]]></nick>
+    ///               <pword><![CDATA[<#password#>]]></pword>
+    ///           </login>
+    ///       </body></msg>
+    /// ```
+    pub fn new(stream: TcpStream, room: &str, username: &str, password: &str) -> Self {
         stream.set_read_timeout(Some(::std::time::Duration::new(2,0))).unwrap();
         
         let mut con = SmartFoxClient{ stream: stream };
@@ -38,9 +58,8 @@ impl SmartFoxClient{
         if header != "<msg t='sys'><body action='apiOK' r='0'></body></msg>"{
             panic!("Invalid server version: {}", header);
         }
-        //                                                                            room               username                    password
-        //                                                                            v                  v                           v
-        let login_header = format!("<msg t='sys'><body action='login' r='0'><login z='{}'><nick><![CDATA[{}]]></nick><pword><![CDATA[{}]></pword></login></body></msg>", room, un, pw);
+
+        let login_header = format!("<msg t='sys'><body action='login' r='0'><login z='{}'><nick><![CDATA[{}]]></nick><pword><![CDATA[{}]]></pword></login></body></msg>", room, username, password);
         
         con.send_packet(SmartFoxPacket(login_header));
         con.read_packets();
@@ -49,7 +68,7 @@ impl SmartFoxClient{
     }
 
     // raw connection
-    pub fn recv(&mut self) -> String{
+    fn recv(&mut self) -> String{
         let mut data = [0;8192];
         
         self.stream.read(&mut data).unwrap();
@@ -63,13 +82,14 @@ impl SmartFoxClient{
 
     // clean connection
 
+    /// Send a zero terminated packet
     pub fn send_packet(&mut self, packet: SmartFoxPacket){
         let data = packet.data + "\0";
         self.stream.write(data.as_bytes()).unwrap();
         println!("Data sent:     {}", data);
     }
     
-    ///Read packets
+    ///Read zero terminated packets
     pub fn read_packets(&mut self) -> Box<Iterator<Item=SmartFoxPacket>>{
         static SPLIT: &'static [u8] = &[0x00];
         let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
