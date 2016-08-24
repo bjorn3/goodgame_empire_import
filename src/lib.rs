@@ -2,6 +2,7 @@ extern crate rustc_serialize;
 extern crate byte_stream_splitter;
 #[macro_use]
 extern crate lazy_static;
+extern crate regex;
 
 use data::DATAMGR;
 

@@ -1,17 +1,9 @@
 use std::fmt;
 
-macro_rules! try_packet{
-    ($data: expr, $reg: expr, $variant: expr) => {
-        if $data.find($reg) == Some(0){
-            return $variant($data.replace($reg, ""));
-        }
-    };
-}
-
 /// A server returned packet of data.
 pub enum ServerPacket{
     /// Unrecognized data
-    Data(String),
+    Data(String, String),
 
     /// Kpi packet
     Kpi(String),
@@ -32,6 +24,12 @@ pub enum ServerPacket{
     /// Some kind of keepalive data.
     Irc(String),
 
+    /// Server info
+    Nfo(String),
+
+    /// Get player info
+    CoreGpi(String),
+
     /// Empty packet.
     None
 }
@@ -39,43 +37,63 @@ pub enum ServerPacket{
 impl ServerPacket{
     /// Create a packet from text.
     /// Returns ServerPacket::Data when it does not recognize the data.
-    pub fn new(data: String) -> Self{
-        if data.is_empty(){
+    pub fn new(original_data: String) -> Self{
+        use regex::Regex;
+
+        if original_data.is_empty(){
             return ServerPacket::None;
         }
-        let data = data.trim_left_matches("%xt%").to_string();
 
-        try_packet!(data, "kpi%1%0%", ServerPacket::Kpi);
-        try_packet!(data, "gam%1%0%", ServerPacket::Gam);
-		try_packet!(data, "gbd%1%0%", ServerPacket::Gbd);
-		try_packet!(data, "gdi%1%0%", ServerPacket::Gdi);
-        try_packet!(data, "irc%1%0%", ServerPacket::Irc);
-        try_packet!(data, "sei%1%0%", ServerPacket::Sei);
-        ServerPacket::Data(data)
+        let regex = Regex::new(r"^%xt%([:word:]+)%1%0%(.*)$").unwrap();
+
+        if let Some(captures) = regex.captures(&original_data){
+            let name = captures.at(1).unwrap();
+            let data = captures.at(2).unwrap();
+            assert!(captures.at(3).is_none());
+            match &*name{
+                "kpi"      => ServerPacket::Kpi    (data.to_string()),
+                "gam"      => ServerPacket::Gam    (data.to_string()),
+                "gbd"      => ServerPacket::Gbd    (data.to_string()),
+                "gdi"      => ServerPacket::Gdi    (data.to_string()),
+                "irc"      => ServerPacket::Irc    (data.to_string()),
+                "sei"      => ServerPacket::Sei    (data.to_string()),
+                "nfo"      => ServerPacket::Nfo    (data.to_string()),
+                "core_gpi" => ServerPacket::CoreGpi(data.to_string()),
+                _          => ServerPacket::Data   (name.to_string(), data.to_string())
+            }
+        }else{
+            ServerPacket::Data("".to_string(), original_data.to_string())
+        }
     }
 }
 
 impl fmt::Debug for ServerPacket{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        let (name, _data): (&'static str, &str) = match *self{
-            ServerPacket::Data(ref data) => ("data", data),
-            ServerPacket::Kpi(ref data) => ("kpi ", data),
-            ServerPacket::Gam(ref data) => ("gam ", data),
-	        ServerPacket::Gbd(ref data) => ("gbd ", data),
-            ServerPacket::Gdi(ref data) => ("gdi ", data),
-            ServerPacket::Sei(ref data) => ("sei ", data),
-            ServerPacket::Irc(ref data) => ("irc ", data),
-            ServerPacket::None => ("none", "")
+        let (description, name, _data): (&'static str, &str, &str) = match *self{
+            ServerPacket::Data   (ref name, ref data) => ("unknown type"  , name      , data),
+            ServerPacket::Kpi    (ref data)           => (""              , "kpi"     , data),
+            ServerPacket::Gam    (ref data)           => (""              , "gam"     , data),
+	        ServerPacket::Gbd    (ref data)           => (""              , "gbd"     , data),
+            ServerPacket::Gdi    (ref data)           => (""              , "gdi"     , data),
+            ServerPacket::Sei    (ref data)           => (""              , "sei"     , data),
+            ServerPacket::Irc    (ref data)           => (""              , "irc"     , data),
+            ServerPacket::Nfo    (ref data)           => ("serverinfo"    , "nfo"     , data),
+            ServerPacket::CoreGpi(ref data)           => ("getplayerinfo" , "core_gpi", data),
+            ServerPacket::None                        => ("none"          , ""        , ""  )
         };
-        write!(f, "{} ( {} ... )", name, _data.chars().zip(0..64).map(|c|c.0).collect::<String>())
+        write!(f, "{:13} ({:9}) ( {} ... )", description, name, _data.chars().zip(0..64).map(|c|c.0).collect::<String>())
     }
 }
 
-///A client send packet of data
+/// A client send packet of data
 #[derive(Debug)]
 pub enum ClientPacket{
-    ///Ask for user castles
+    /// Ask for user castles
     Gdi(u64),
+
+    /// Ask for world map
+    Gaa(String),
+
     None
 }
 
@@ -85,6 +103,9 @@ impl ClientPacket{
             ClientPacket::None => String::new(),
             ClientPacket::Gdi(uid) => {
                 format!("%xt%EmpireEx_11%gdi%1%{{\"PID\":{}}}%", uid)
+            },
+            ClientPacket::Gaa(ref data) => {
+                format!("%xt%EmpireEx_11%gaa%1%{}%", data)
             }
         }
     }
