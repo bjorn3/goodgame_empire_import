@@ -17,6 +17,8 @@ pub mod packet;
 pub mod data;
 ///Data reader
 pub mod gbd;
+///Map reader
+pub mod map;
 /// Smartfoxserver client
 pub mod smartfox;
 ///Goodgame empire connection

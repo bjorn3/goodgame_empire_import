@@ -84,7 +84,7 @@ macro_rules! same{
     ($a:expr, $b:expr, $field:ident) => {
         if !$b.is_none(){
             if let (Some(a), Some(b)) = ($a.$field, $b.unwrap().$field){
-                assert_eq!(a, b);
+                assert_eq!(a, b, "{:?}, {:?}", $a, $b);
             }
         }
     }

@@ -20,9 +20,15 @@ fn main() {
         process_packet(&mut con, pkt);
     }
     
+    con.send_packet(ClientPacket::Gaa(r#"{"AX2":350,"KID":0,"AY1":806,"AY2":818,"AX1":338}"#.to_string()));
+    
+    for pkt in con.read_packets(){
+        process_packet(&mut con, pkt);
+    }
+    
     println!("");
 
-    for castle in DATAMGR.lock().unwrap().castles.values().take(20){
+    for castle in DATAMGR.lock().unwrap().castles.values().take(40){
         println!("{:?}", castle);
     }
     
@@ -54,6 +60,20 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket){
         },
         ServerPacket::Gdi(data) => {
             gge::read_names(data);
+        },
+        ServerPacket::Gaa(data) => {
+            println!("\n\n{}\n\n", data);
+            let gaa = gge::map::Gaa::parse(data).unwrap();
+            for castle in gaa.castles.iter(){
+                DATAMGR.lock().unwrap().add_castle(castle.clone());
+            }
+            for castle in gaa.castle_names.iter(){
+                DATAMGR.lock().unwrap().add_castle(castle.clone());
+            }
+            for user in gaa.users.iter(){
+                DATAMGR.lock().unwrap().users.insert(user.id, user.clone());
+            }
+            println!("\n\n{:#?}\n\n", gaa);
         },
         _ => {}
     };

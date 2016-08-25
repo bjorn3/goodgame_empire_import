@@ -29,6 +29,9 @@ pub enum ServerPacket{
 
     /// Get player info
     CoreGpi(String),
+    
+    /// Map info
+    Gaa(String),
 
     /// Empty packet.
     None
@@ -59,6 +62,7 @@ impl ServerPacket{
                 "sei"      => ServerPacket::Sei    (data.to_string()),
                 "nfo"      => ServerPacket::Nfo    (data.to_string()),
                 "core_gpi" => ServerPacket::CoreGpi(data.to_string()),
+                "gaa"      => ServerPacket::Gaa    (data.to_string()),
                 _          => ServerPacket::Data   (name.to_string(), data.to_string())
             }
         }else{
@@ -79,6 +83,7 @@ impl fmt::Debug for ServerPacket{
             ServerPacket::Irc    (ref data)           => (""              , "irc"     , data),
             ServerPacket::Nfo    (ref data)           => ("serverinfo"    , "nfo"     , data),
             ServerPacket::CoreGpi(ref data)           => ("getplayerinfo" , "core_gpi", data),
+            ServerPacket::Gaa    (ref data)           => ("mapinfo"       , "gaa"     , data),
             ServerPacket::None                        => ("none"          , ""        , ""  )
         };
         write!(f, "{:13} ({:9}) ( {} ... )", description, name, _data.chars().zip(0..64).map(|c|c.0).collect::<String>())
