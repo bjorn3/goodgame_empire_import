@@ -9,6 +9,19 @@ macro_rules! try_field{
     };
 }
 
+trait Flatten<T> {
+    fn flatten(self) -> Option<T>;
+}
+
+impl<T> Flatten<T> for Option<Option<T>> {
+    fn flatten(self) -> Option<T> {
+        match self {
+            None => None,
+            Some(v) => v,
+        }
+    }
+}
+
 ///Map data
 #[derive(Debug, Clone)]
 pub struct Gaa{
@@ -52,7 +65,8 @@ impl Gaa{
             let user_id = user.get("OID").unwrap().as_u64().unwrap();
             users.push(User{
                 id: user_id,
-                username: user.get("N").unwrap().as_string().map(ToString::to_string)
+                username: user.get("N").unwrap().as_string().map(ToString::to_string),
+                own_alliance: false
             });
             
             let ap = user.get("AP").unwrap().as_array().unwrap();

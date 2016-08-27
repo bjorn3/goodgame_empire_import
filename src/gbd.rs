@@ -66,7 +66,7 @@ impl FieldAinM{
             let oid = row.get("OID").unwrap().as_u64().unwrap(); // ain A M [] OID
             let n = row.get("N").unwrap().as_string().unwrap().to_owned(); // ain A M [] N (username)
             
-            DATAMGR.lock().unwrap().add_owner_name(oid, &n);
+            DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
             
             let ap = row.get("AP").unwrap().as_array().unwrap(); // ain A M [] AP (base castles)
             let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid)).filter_map(|castle|castle.map_err(|err|{

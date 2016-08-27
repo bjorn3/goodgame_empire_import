@@ -20,6 +20,28 @@ fn main() {
         process_packet(&mut con, pkt);
     }
     
+    
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":806,"AY2":818,"KID":0,"AX1":338,"AX2":350}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
     con.send_packet(ClientPacket::Gaa(r#"{"AX2":350,"KID":0,"AY1":806,"AY2":818,"AX1":338}"#.to_string()));
     
     for pkt in con.read_packets(){

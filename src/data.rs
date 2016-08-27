@@ -63,7 +63,9 @@ pub struct User{
     ///Internal id
     pub id: u64,
     ///Username
-    pub username: Option<String>
+    pub username: Option<String>,
+    /// Is it from your own alliance?
+    pub own_alliance: bool
 }
 
 impl fmt::Display for User{
@@ -125,10 +127,14 @@ impl DataMgr{
     }
     
     ///Add the name of the specified user
-    pub fn add_owner_name(&mut self, uid: u64, name: &str){
-        self.users.entry(uid).or_insert(User{
+    pub fn add_owner_name(&mut self, uid: u64, name: &str, own_alliance: bool){
+        let user = self.users.entry(uid).or_insert(User{
             id: uid,
-            username: Some(name.to_owned())
+            username: Some(name.to_owned()),
+            own_alliance: false,
         });
+        if own_alliance{
+            user.own_alliance = true;
+        }
     }
 }
