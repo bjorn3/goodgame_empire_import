@@ -86,6 +86,9 @@ impl SmartFoxClient{
     pub fn send_packet(&mut self, packet: SmartFoxPacket){
         let data = packet.data + "\0";
         self.stream.write(data.as_bytes()).unwrap();
+        if data.find("lli").is_some(){
+            return;
+        }
         println!("Data sent:     {}", data);
     }
     
