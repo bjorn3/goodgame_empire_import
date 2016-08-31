@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["read_castles","Read castles"]],"mod":[["connection","Goodgame empire connection"],["data","Data"],["error","Error"],["gbd","Data reader"],["packet","Packet"]]});
+initSidebarItems({"fn":[["as_json","Create an `AsJson` wrapper which can be used to print a value as JSON on-the-fly via `write!`"],["read_castles","Read castles"],["read_names",""]],"mod":[["connection","Goodgame empire connection"],["data","Data"],["error","Error"],["gbd","Data reader"],["map","Map reader"],["packet","Packet"],["smartfox","Smartfoxserver client"]]});

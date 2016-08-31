@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,21 +44,34 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>goodgame_empire_import</a>::<wbr><a href='index.html'>connection</a>::<wbr><a class='struct' href=''>Connection</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-503' class='srclink' href='../../src/goodgame_empire_import/connection.rs.html#8-10' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-791' class='srclink' href='../../src/goodgame_empire_import/src/connection.rs.html#8-10' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Connection {
     // some fields omitted
 }</pre><div class='docblock'><p>Goodgame empire connection</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../goodgame_empire_import/connection/struct.Connection.html' title='goodgame_empire_import::connection::Connection'>Connection</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; Self</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../goodgame_empire_import/connection/struct.Connection.html' title='goodgame_empire_import::connection::Connection'>Connection</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-805' class='srclink' href='../../src/goodgame_empire_import/src/connection.rs.html#17-71' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(server: <a class='enum' href='https://doc.rust-lang.org/nightly/std/net/ip/enum.IpAddr.html' title='std::net::ip::IpAddr'>IpAddr</a>, un: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, pw: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
 <div class='docblock'><p>Create a new connection</p>
-</div><h4 id='method.login' class='method'><code>fn <a href='#method.login' class='fnname'>login</a>(&amp;mut self, un: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, pw: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
-<div class='docblock'><p>Login</p>
-</div><h4 id='method.read_data' class='method'><code>fn <a href='#method.read_data' class='fnname'>read_data</a>(&amp;mut self, print: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>&lt;Item=<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;&gt;</code></h4>
-<div class='docblock'><p>Read splited raw packets</p>
-</div><h4 id='method.read_packets' class='method'><code>fn <a href='#method.read_packets' class='fnname'>read_packets</a>(&amp;mut self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>&lt;Item=<a class='enum' href='../../goodgame_empire_import/packet/enum.Packet.html' title='goodgame_empire_import::packet::Packet'>Packet</a>&gt;&gt;</code></h4>
-<div class='docblock'><p>Read packets</p>
+
+<h2 id='smartfoxserver-settings' class='section-header'><a href='#smartfoxserver-settings'>SmartFoxServer settings</a></h2>
+<ul>
+<li>room: &quot;EmpireEx_11&quot;</li>
+<li>username: &quot;&quot;</li>
+<li><p>password: &quot;1455712286016%nl%&quot; <code>02/17/2016 @ 12:31pm (UTC)</code> unix timestamp with millisecond precision</p>
+
+<h1 id='sends-and-receives' class='section-header'><a href='#sends-and-receives'>Sends and receives</a></h1>
+<h2 id='login' class='section-header'><a href='#login'>login</a></h2>
+<pre><code class="language-xml">send: %xt%EmpireEx_11%lli%1%{&quot;CONM&quot;:413,&quot;KID&quot;:&quot;&quot;,&quot;DID&quot;:&quot;&quot;,&quot;ID&quot;:0,&quot;PW&quot;:&quot;&lt;#password#&gt;&quot;,&quot;AID&quot;:&quot;1456064275209394654&quot;,&quot;NOM&quot;:&quot;&lt;#username#&gt;&quot;,&quot;RTM&quot;:129,&quot;LANG&quot;:&quot;nl&quot;}%
+</code></pre></li>
+</ul>
+</div><h4 id='method.send_packet' class='method'><code>fn <a href='#method.send_packet' class='fnname'>send_packet</a>(&amp;mut self, packet: <a class='enum' href='../../goodgame_empire_import/packet/enum.ClientPacket.html' title='goodgame_empire_import::packet::ClientPacket'>ClientPacket</a>)</code></h4>
+<div class='docblock'><p>Send gge packet</p>
+</div><h4 id='method.read_packets' class='method'><code>fn <a href='#method.read_packets' class='fnname'>read_packets</a>(&amp;mut self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a>&lt;Item=<a class='enum' href='../../goodgame_empire_import/packet/enum.ServerPacket.html' title='goodgame_empire_import::packet::ServerPacket'>ServerPacket</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Read gge packets</p>
+
+<p>Ignores kpi and irc packets</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -81,6 +95,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 
@@ -101,7 +117,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

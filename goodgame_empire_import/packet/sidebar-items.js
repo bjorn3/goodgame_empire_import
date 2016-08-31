@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Packet","A server returned packet of data"]]});
+initSidebarItems({"enum":[["ClientPacket","A client send packet of data"],["ServerPacket","A server returned packet of data."]]});

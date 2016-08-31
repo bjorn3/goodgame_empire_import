@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["SmartFoxPacket","Create a SmartFoxServer packet from a string"]],"struct":[["SmartFoxClient","Goodgame empire connection"],["SmartFoxPacket",""]]});

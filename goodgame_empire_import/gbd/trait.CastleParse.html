@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,24 +44,24 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>goodgame_empire_import</a>::<wbr><a href='index.html'>gbd</a>::<wbr><a class='trait' href=''>CastleParse</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-321' class='srclink' href='../../src/goodgame_empire_import/gbd.rs.html#16-19' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-552' class='srclink' href='../../src/goodgame_empire_import/src/gbd.rs.html#15-18' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait CastleParse {
-    fn <a href='#tymethod.parse' class='fnname'>parse</a>(json: &amp;<a class='enum' href='../../rustc_serialize/json/enum.Json.html' title='rustc_serialize::json::Json'>Json</a>, gcl: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, owner_id: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, world: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../goodgame_empire_import/data/enum.World.html' title='goodgame_empire_import::data::World'>World</a>&gt;, owner_name: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self, <a class='enum' href='../../goodgame_empire_import/error/enum.Error.html' title='goodgame_empire_import::error::Error'>Error</a>&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span>;
+    fn <a href='#tymethod.parse' class='fnname'>parse</a>(json: &amp;<a class='enum' href='../../rustc_serialize/json/enum.Json.html' title='rustc_serialize::json::Json'>Json</a>, owner_id: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self,&nbsp;<a class='enum' href='../../goodgame_empire_import/error/enum.Error.html' title='goodgame_empire_import::error::Error'>Error</a>&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span>;
 }</pre><div class='docblock'><p>Can parse castles</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.parse' class='method stab '><code>fn <a href='#tymethod.parse' class='fnname'>parse</a>(json: &amp;<a class='enum' href='../../rustc_serialize/json/enum.Json.html' title='rustc_serialize::json::Json'>Json</a>, gcl: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, owner_id: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, world: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../goodgame_empire_import/data/enum.World.html' title='goodgame_empire_import::data::World'>World</a>&gt;, owner_name: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self, <a class='enum' href='../../goodgame_empire_import/error/enum.Error.html' title='goodgame_empire_import::error::Error'>Error</a>&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span></code></h3><div class='docblock'><p>Parse castle</p>
+        <h3 id='tymethod.parse' class='method stab '><code>fn <a href='#tymethod.parse' class='fnname'>parse</a>(json: &amp;<a class='enum' href='../../rustc_serialize/json/enum.Json.html' title='rustc_serialize::json::Json'>Json</a>, owner_id: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self,&nbsp;<a class='enum' href='../../goodgame_empire_import/error/enum.Error.html' title='goodgame_empire_import::error::Error'>Error</a>&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span></code></h3><div class='docblock'><p>Parse castle</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../goodgame_empire_import/gbd/trait.CastleParse.html' title='goodgame_empire_import::gbd::CastleParse'>CastleParse</a> for <a class='struct' href='../../goodgame_empire_import/data/struct.Castle.html' title='goodgame_empire_import::data::Castle'>Castle</a></code></li>
+    <li><code>impl CastleParse for <a class='struct' href='../../goodgame_empire_import/data/struct.Castle.html' title='goodgame_empire_import::data::Castle'>Castle</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/goodgame_empire_import/gbd/trait.CastleParse.js">
-                      </script></section>
+                         src="../../implementors/goodgame_empire_import/gbd/trait.CastleParse.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -83,6 +84,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 
@@ -103,7 +106,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>
