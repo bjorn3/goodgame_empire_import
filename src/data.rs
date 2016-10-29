@@ -11,73 +11,73 @@ lazy_static!{
     };
 }
 
-///World
+/// World
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, RustcEncodable)]
-pub enum World{
-    ///Fire Peaks
+pub enum World {
+    /// Fire Peaks
     Fire,
-    ///Burning Sands
+    /// Burning Sands
     Sand,
-    ///Green
+    /// Green
     Grass,
-    ///EW
+    /// EW
     Ice,
-    ///Special Event
-    SpecialEvent
+    /// Special Event
+    SpecialEvent,
 }
 
-impl World{
-    ///Get world from internal integer
-    pub fn from_int(num: u64) -> Self{
-        match num{
+impl World {
+    /// Get world from internal integer
+    pub fn from_int(num: u64) -> Self {
+        match num {
             0 => World::Grass,
             1 => World::Sand,
             2 => World::Ice,
             3 => World::Fire,
             4 => World::SpecialEvent,
-            _ => panic!("Unrecognized world number {}", num)
+            _ => panic!("Unrecognized world number {}", num),
         }
     }
 }
 
-///Castle data
+/// Castle data
 #[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable)]
-pub struct Castle{
-    ///Internal id
+pub struct Castle {
+    /// Internal id
     pub id: u64,
-    ///Internal owner id
+    /// Internal owner id
     pub owner_id: Option<u64>,
-    ///Castle name
+    /// Castle name
     pub name: Option<String>,
-    ///X position
+    /// X position
     pub x: Option<u64>,
-    ///Y position
+    /// Y position
     pub y: Option<u64>,
-    ///World
+    /// World
     pub world: Option<World>,
 }
 
-///User data
+/// User data
 #[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable)]
-pub struct User{
-    ///Internal id
+pub struct User {
+    /// Internal id
     pub id: u64,
-    ///Username
+    /// Username
     pub username: Option<String>,
     /// Is it from your own alliance?
-    pub own_alliance: bool
+    pub own_alliance: bool,
 }
 
-impl fmt::Display for User{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+impl fmt::Display for User {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", as_json(self))
     }
 }
 
-///Data manager
+/// Data manager
 #[derive(Debug, RustcEncodable)]
-pub struct DataMgr{
-    ///List of castles
+pub struct DataMgr {
+    /// List of castles
     pub castles: HashMap<u64, Castle>,
     pub users: HashMap<u64, User>,
 }
@@ -92,17 +92,17 @@ macro_rules! same{
     }
 }
 
-impl DataMgr{
-    ///Create new data manager
-    pub fn new() -> Self{
-        DataMgr{
+impl DataMgr {
+    /// Create new data manager
+    pub fn new() -> Self {
+        DataMgr {
             castles: HashMap::new(),
             users: HashMap::new(),
         }
     }
-    
-    ///Add the data of the specified castle
-    pub fn add_castle(&mut self, castle: Castle) -> Castle{
+
+    /// Add the data of the specified castle
+    pub fn add_castle(&mut self, castle: Castle) -> Castle {
         let mut castle = castle;
         let old_castle = self.castles.remove(&castle.id);
 
@@ -112,7 +112,7 @@ impl DataMgr{
         same!(castle.clone(), old_castle.clone(), y);
         same!(castle.clone(), old_castle.clone(), world);
 
-        match old_castle{
+        match old_castle {
             Some(old_castle) => {
                 castle.owner_id = castle.owner_id.or(old_castle.owner_id);
                 castle.name = castle.name.or(old_castle.name);
@@ -125,15 +125,15 @@ impl DataMgr{
         self.castles.insert(castle.id, castle.clone());
         return castle;
     }
-    
-    ///Add the name of the specified user
-    pub fn add_owner_name(&mut self, uid: u64, name: &str, own_alliance: bool){
-        let user = self.users.entry(uid).or_insert(User{
+
+    /// Add the name of the specified user
+    pub fn add_owner_name(&mut self, uid: u64, name: &str, own_alliance: bool) {
+        let user = self.users.entry(uid).or_insert(User {
             id: uid,
             username: Some(name.to_owned()),
             own_alliance: false,
         });
-        if own_alliance{
+        if own_alliance {
             user.own_alliance = true;
         }
     }

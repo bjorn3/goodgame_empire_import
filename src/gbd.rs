@@ -11,52 +11,59 @@ macro_rules! try_field{
     };
 }
 
-///Can parse castles
-pub trait CastleParse{
-    ///Parse castle
+/// Can parse castles
+pub trait CastleParse {
+    /// Parse castle
     fn parse(json: &Json, owner_id: u64) -> Result<Self, Error> where Self: Sized;
 }
 
-impl CastleParse for Castle{
-    fn parse(json: &Json, owner_id: u64) -> Result<Castle, Error>{
-        if !json.is_array(){
+impl CastleParse for Castle {
+    fn parse(json: &Json, owner_id: u64) -> Result<Castle, Error> {
+        if !json.is_array() {
             return Err(Error::InvalidFormat);
         }
         let json: &Vec<Json> = json.as_array().unwrap();
-        
-        if json.len() < 4{
+
+        if json.len() < 4 {
             // HACK to be able to run when there are special events
             println!("Parse error occured: json.len() < 4");
             return Err(Error::InvalidFormat);
         }
-        
+
         let world = json[0].as_u64().and_then(|world| Some(World::from_int(world)) ); // ain A M [] AP/VP [0] (world)
-        
+
         let id = json[1].as_u64().unwrap(); // ain A M [] AP/VP [1] (id)
         let x = json[2].as_u64(); // ain A M [] AP/VP [2] (x)
         let y = json[3].as_u64(); // ain A M [] AP/VP [3] (y)
-        
-        Ok(Castle{ id: id, owner_id: Some(owner_id), name: None, x: x, y: y, world: world })
+
+        Ok(Castle {
+            id: id,
+            owner_id: Some(owner_id),
+            name: None,
+            x: x,
+            y: y,
+            world: world,
+        })
     }
 }
 
-///The alliance member data
+/// The alliance member data
 #[derive(Debug, Clone)]
-pub struct FieldAinM{
-    ///Internal id
+pub struct FieldAinM {
+    /// Internal id
     pub oid: u64,
-    ///Username
+    /// Username
     pub n: String,
-    ///Base castles
+    /// Base castles
     pub ap: Vec<Castle>,
-    ///Support castles
+    /// Support castles
     pub vp: Vec<Castle>,
 }
 
-impl FieldAinM{
-    ///Parse json data
-    pub fn parse(json: &Json) -> Result<Vec<FieldAinM>, Error>{
-        if !json.is_array(){
+impl FieldAinM {
+    /// Parse json data
+    pub fn parse(json: &Json) -> Result<Vec<FieldAinM>, Error> {
+        if !json.is_array() {
             return Err(Error::InvalidFormat);
         }
         let json: &Vec<Json> = json.as_array().unwrap();
@@ -85,21 +92,21 @@ impl FieldAinM{
     }
 }
 
-///Main data
+/// Main data
 #[derive(Debug, Clone)]
-pub struct Gbd{
-    ///User data
+pub struct Gbd {
+    /// User data
     pub gpi: String,
-    ///Alliance member castles
-    pub ain: Vec<FieldAinM>
+    /// Alliance member castles
+    pub ain: Vec<FieldAinM>,
 }
 
-impl Gbd{
-    ///Parse text returned from the server
-    pub fn parse(data: String) -> Result<Self, Error>{
+impl Gbd {
+    /// Parse text returned from the server
+    pub fn parse(data: String) -> Result<Self, Error> {
         let data = data.trim_matches('%');
         let data = try!(Json::from_str(&data));
-        if !data.is_object(){
+        if !data.is_object() {
             return Err(Error::InvalidFormat);
         }
         let json_data = data.clone();
@@ -108,7 +115,10 @@ impl Gbd{
         let gpi = try_field!(data, "gpi");
         let ain = json_data.find_path(&["ain", "A", "M"]).unwrap(); // ain A M
         let ain = FieldAinM::parse(ain).unwrap();
-        let gbd = Gbd{gpi: gpi.unwrap(), ain: ain};
+        let gbd = Gbd {
+            gpi: gpi.unwrap(),
+            ain: ain,
+        };
         Ok(gbd)
     }
 }
