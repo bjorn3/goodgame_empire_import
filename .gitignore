@@ -1,5 +1,6 @@
 data.json
 data2.json
+log.json
 
 # Compiled files
 *.o
@@ -18,3 +19,5 @@ data2.json
 Cargo.lock
 
 *.as
+
+.DS_Store

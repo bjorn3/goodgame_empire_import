@@ -2,7 +2,6 @@ use std::fmt;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use rustc_serialize::{Encoder, Encodable};
 use rustc_serialize::json::as_json;
 
 lazy_static!{
@@ -12,7 +11,7 @@ lazy_static!{
 }
 
 /// World
-#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, RustcEncodable)]
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, RustcDecodable, RustcEncodable)]
 pub enum World {
     /// Fire Peaks
     Fire,
@@ -41,7 +40,7 @@ impl World {
 }
 
 /// Castle data
-#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
 pub struct Castle {
     /// Internal id
     pub id: u64,
@@ -58,7 +57,7 @@ pub struct Castle {
 }
 
 /// User data
-#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
 pub struct User {
     /// Internal id
     pub id: u64,

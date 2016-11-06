@@ -1,6 +1,13 @@
 #[macro_use]
+extern crate slog;
+extern crate slog_term;
+extern crate slog_stream;
+extern crate slog_json;
+
+#[macro_use]
 extern crate lazy_static;
 extern crate goodgame_empire_import as gge;
+
 use std::env;
 use std::io;
 use std::io::Write;
@@ -11,16 +18,35 @@ use gge::connection::{Connection, DUTCH_SERVER};
 use gge::data::DATAMGR;
 
 fn main() {
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open("./log.json")
+        .unwrap();
+    let json_log_formatter = slog_json::new().set_newlines(true).add_default_keys().build();
+
+    let log_root = slog::Logger::root(
+        slog::Fuse::new(
+            slog::Duplicate::new(
+                slog::LevelFilter::new(slog_term::streamer().build(), slog::Level::Debug),
+                slog_stream::stream(log_file, json_log_formatter)
+            )
+        ),
+        o!("version" => env!("CARGO_PKG_VERSION"))
+    );
+
     io::stderr().write(b"Please login\n").unwrap();
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw);
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, log_root.clone());
 
     for pkt in con.read_packets() {
-        process_packet(&mut con, pkt);
+        process_packet(&mut con, pkt, log_root.clone());
     }
 
+    debug!(log_root.clone(), "");
 
     con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
     con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
@@ -45,14 +71,16 @@ fn main() {
     //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
     con.send_packet(ClientPacket::Gaa(r#"{"AX2":350,"KID":0,"AY1":806,"AY2":818,"AX1":338}"#.to_string()));
 
+    debug!(log_root.clone(), "");
+
     for pkt in con.read_packets() {
-        process_packet(&mut con, pkt);
+        process_packet(&mut con, pkt, log_root.clone());
     }
 
-    println!("");
+    debug!(log_root.clone(), "");
 
     for castle in DATAMGR.lock().unwrap().castles.values().take(40) {
-        println!("{:?}", castle);
+        info!(log_root.clone(), "     read castle"; "castle" => format!("{:?}", castle));
     }
 
     let file_name = env_or_default("GGE_FILENAME", "data2.json");
@@ -68,11 +96,11 @@ fn main() {
     write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
 }
 
-fn process_packet(con: &mut Connection, pkt: ServerPacket) {
+fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger) {
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
+            let data = gge::gbd::Gbd::parse(data.to_owned(), logger.clone()).unwrap();
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
@@ -82,11 +110,11 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) {
             }
         },
         ServerPacket::Gdi(data) => {
-            gge::read_names(data);
+            gge::read_names(data, logger);
         },
         ServerPacket::Gaa(data) => {
-            println!("\n\n{}\n\n", data);
-            let gaa = gge::map::Gaa::parse(data).unwrap();
+            //trace!(logger, "gaa packet"; "data" => data);
+            let gaa = gge::map::Gaa::parse(data, logger.clone()).unwrap();
             for castle in gaa.castles.iter() {
                 DATAMGR.lock().unwrap().add_castle(castle.clone());
             }
@@ -96,7 +124,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) {
             for user in gaa.users.iter() {
                 DATAMGR.lock().unwrap().users.insert(user.id, user.clone());
             }
-            println!("\n\n{:#?}\n\n", gaa);
+            //trace!(logger, "gaa  data"; "parsed" => format!("{:?}", gaa));
         },
         _ => {}
     };

@@ -1,4 +1,6 @@
-use rustc_serialize::json::Json;
+use slog::*;
+
+use rustc_serialize::json::{self, Json};
 
 use error::Error;
 use data::{User, Castle, World};
@@ -42,7 +44,7 @@ pub struct Gaa {
 
 impl Gaa {
     /// Parse text returned from the server
-    pub fn parse(data: String) -> Result<Self, Error> {
+    pub fn parse(data: String, logger: Logger) -> Result<Self, Error> {
         let data = data.trim_matches('%');
         let data = try!(Json::from_str(&data));
         if !data.is_object() {
@@ -95,13 +97,14 @@ impl Gaa {
             if castle.len() < 10 {
                 continue;
             }
-            println!("{:?}", castle);
             let id = castle[3].as_u64();
             if id.is_none() {
                 continue;
             }
-            let id = id.unwrap(); println!("{}", id);
-            let name = castle.get(10).map(Json::as_string).map(Option::unwrap).map(ToString::to_string); println!("{:?}", name);
+            let id = id.unwrap();
+            let name = castle.get(10).map(Json::as_string).map(Option::unwrap).map(ToString::to_string);
+
+            trace!(logger, "  process castle"; "castle" => json::encode(castle).unwrap_or_else(|err|format!("{:?}", err)), "id" => id, "name" => name);
             castle_names.push(Castle {
                 id: id,
                 owner_id: None,

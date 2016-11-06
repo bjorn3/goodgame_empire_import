@@ -1,13 +1,19 @@
+#[macro_use]
+extern crate slog;
+
 extern crate rustc_serialize;
 extern crate byte_stream_splitter;
 #[macro_use]
 extern crate lazy_static;
 extern crate regex;
 
-use data::DATAMGR;
+use slog::*;
 
 pub use rustc_serialize::json::as_json;
 use rustc_serialize::json::Json;
+
+use data::DATAMGR;
+
 
 /// Error
 pub mod error;
@@ -36,7 +42,7 @@ pub fn read_castles(data: gbd::Gbd) {
     }
 }
 
-pub fn read_names(data: String) {
+pub fn read_names(data: String, logger: Logger) {
     let data = data.trim_right_matches('%');
     let data = Json::from_str(data).unwrap();
     let data = data.as_object().unwrap();
@@ -59,7 +65,7 @@ pub fn read_names(data: String) {
                 y: None,
                 world: Some(world_name),
             };
-            println!("castle: {:?}", castle);
+            debug!(logger, "processed castle";  "castle" => format!("{:?}", castle));
             DATAMGR.lock().unwrap().add_castle(castle);
         }
     }

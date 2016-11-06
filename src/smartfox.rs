@@ -3,6 +3,8 @@ use std::fmt;
 use std::io::prelude::*;
 use std::net::TcpStream;
 
+use slog::*;
+
 pub struct SmartFoxPacket {
     pub data: String,
 }
@@ -24,6 +26,7 @@ pub fn SmartFoxPacket<T>(data: T) -> SmartFoxPacket where T: Into<String> {
 /// Goodgame empire connection
 pub struct SmartFoxClient {
     pub stream: TcpStream,
+    logger: Logger
 }
 
 impl SmartFoxClient {
@@ -47,10 +50,10 @@ impl SmartFoxClient {
     ///           </login>
     ///       </body></msg>
     /// ```
-    pub fn new(stream: TcpStream, room: &str, username: &str, password: &str) -> Self {
+    pub fn new(stream: TcpStream, room: &str, username: &str, password: &str, logger: Logger) -> Self {
         stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).unwrap();
 
-        let mut con = SmartFoxClient { stream: stream };
+        let mut con = SmartFoxClient { stream: stream, logger: logger };
 
         let ver_chk_msg = "<msg t='sys'><body action='verChk' r='0'><ver v='166' /></body></msg>";
         let _ = con.send_packet(SmartFoxPacket(ver_chk_msg.to_string()));
@@ -81,11 +84,12 @@ impl SmartFoxClient {
 
         let data = str::from_utf8(&data)
             .expect("Malformed utf8 data provided by the server")
-            .trim_matches('\0');
+            .trim_matches('\0')
+            .to_string();
 
-        println!("Data received: {}", data);
+        trace!(self.logger.clone(), "   smartfox recv"; "data" => data.clone());
 
-        String::from(data)
+        data
     }
 
     // clean connection
@@ -97,7 +101,6 @@ impl SmartFoxClient {
         if data.find("lli").is_some() {
             return;
         }
-        println!("Data sent:     {}", data);
     }
 
     /// Read zero terminated packets

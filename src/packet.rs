@@ -1,6 +1,7 @@
 use std::fmt;
 
 /// A server returned packet of data.
+#[derive(Clone)]
 pub enum ServerPacket{
     /// Unrecognized data
     Data(String, String),
