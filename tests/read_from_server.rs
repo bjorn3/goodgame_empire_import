@@ -1,3 +1,6 @@
+extern crate slog;
+extern crate slog_term;
+
 extern crate goodgame_empire_import as gge;
 use std::io::Write;
 
@@ -8,13 +11,20 @@ use gge::data::DATAMGR;
 
 #[test]
 fn read_from_server() {
+    let log_root = slog::Logger::root(
+        slog::Fuse::new(
+            slog::LevelFilter::new(slog_term::streamer().build(), slog::Level::Debug)
+        ),
+        o!("version" => env!("CARGO_PKG_VERSION"))
+    );
+    
     let un = std::env::var("GGE_USERNAME").unwrap();
     let pw = std::env::var("GGE_PASSWORD").unwrap();
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw);
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone());
 
     for pkt in con.read_packets() {
-        process_packet(&mut con, pkt);
+        process_packet(&mut con, pkt, logger.clone());
     }
 
     for _castle in DATAMGR.lock().unwrap().castles.values().take(20) {
@@ -32,11 +42,11 @@ fn read_from_server() {
     write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
 }
 
-fn process_packet(con: &mut Connection, pkt: ServerPacket) {
+fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger) {
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
+            let data = gge::gbd::Gbd::parse(data.to_owned(), logger.clone()).unwrap();
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
