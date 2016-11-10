@@ -2,7 +2,7 @@ use slog::*;
 
 use rustc_serialize::json::{self, Json};
 
-use error::Error;
+use error::{Error, ErrorKind};
 use data::{User, Castle, World};
 
 macro_rules! try_field{
@@ -48,7 +48,7 @@ impl Gaa {
         let data = data.trim_matches('%');
         let data = try!(Json::from_str(&data));
         if !data.is_object() {
-            return Err(Error::InvalidFormat);
+            return Err(ErrorKind::InvalidFormat("gaa not an object".into()).into());
         }
 
         let data = data.as_object().unwrap().clone();

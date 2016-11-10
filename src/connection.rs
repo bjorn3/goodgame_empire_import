@@ -3,6 +3,7 @@ use std::net::{TcpStream, IpAddr, Ipv4Addr};
 
 use slog::*;
 
+use error::{Error, ChainErr};
 use smartfox::{SmartFoxClient, SmartFoxPacket};
 use packet::{ServerPacket, ClientPacket};
 
@@ -30,9 +31,9 @@ impl Connection {
     /// ```xml
     /// send: %xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"<#password#>","AID":"1456064275209394654","NOM":"<#username#>","RTM":129,"LANG":"nl"}%
     /// ```
-    pub fn new(server: IpAddr, un: &str, pw: &str, logger: Logger) -> Self {
-        let stream = TcpStream::connect((server, 443)).unwrap();
-        stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).unwrap();
+    pub fn new(server: IpAddr, un: &str, pw: &str, logger: Logger) -> Result<Self, Error> {
+        let stream = try!(TcpStream::connect((server, 443)).chain_err(||"Can't connect to server"));
+        try!(stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).chain_err(||"Can't set server connection timeout"));
 
         //                                          room               02/17/2016 @ 12:31pm (UTC) unix timestamp with millisecond precision
         //                                          v                  v
@@ -43,7 +44,7 @@ impl Connection {
 
         con.smartfox.send_packet(SmartFoxPacket(login_code));
 
-        con
+        Ok(con)
     }
 
     // clean connection

@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate slog;
+#[macro_use]
+extern crate error_chain;
 
 extern crate rustc_serialize;
 extern crate byte_stream_splitter;

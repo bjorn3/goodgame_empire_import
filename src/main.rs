@@ -12,6 +12,7 @@ use std::env;
 use std::io;
 use std::io::Write;
 
+use gge::error::ErrorExt;
 use gge::as_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};
@@ -26,7 +27,7 @@ fn main() {
         .unwrap();
     let json_log_formatter = slog_json::new().set_newlines(true).add_default_keys().build();
 
-    let log_root = slog::Logger::root(
+    let logger = slog::Logger::root(
         slog::Fuse::new(
             slog::Duplicate::new(
                 slog::LevelFilter::new(slog_term::streamer().build(), slog::Level::Debug),
@@ -40,13 +41,13 @@ fn main() {
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, log_root.clone());
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone()).unwrap_pretty(logger.clone());
 
     for pkt in con.read_packets() {
-        process_packet(&mut con, pkt, log_root.clone());
+        process_packet(&mut con, pkt, logger.clone());
     }
 
-    debug!(log_root.clone(), "");
+    debug!(logger.clone(), "");
 
     con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
     con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
@@ -71,16 +72,16 @@ fn main() {
     //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
     con.send_packet(ClientPacket::Gaa(r#"{"AX2":350,"KID":0,"AY1":806,"AY2":818,"AX1":338}"#.to_string()));
 
-    debug!(log_root.clone(), "");
+    debug!(logger.clone(), "");
 
     for pkt in con.read_packets() {
-        process_packet(&mut con, pkt, log_root.clone());
+        process_packet(&mut con, pkt, logger.clone());
     }
 
-    debug!(log_root.clone(), "");
+    debug!(logger.clone(), "");
 
     for castle in DATAMGR.lock().unwrap().castles.values().take(40) {
-        info!(log_root.clone(), "     read castle"; "castle" => format!("{:?}", castle));
+        info!(logger.clone(), "     read castle"; "castle" => format!("{:?}", castle));
     }
 
     let file_name = env_or_default("GGE_FILENAME", "data2.json");

@@ -2,7 +2,7 @@ use slog::*;
 
 use rustc_serialize::json::{self, Json};
 
-use error::Error;
+use error::{Error, ErrorKind, ErrorExt, ChainErr};
 use data::Castle;
 use data::World;
 use data::DATAMGR;
@@ -22,14 +22,14 @@ pub trait CastleParse {
 impl CastleParse for Castle {
     fn parse(json: &Json, owner_id: u64, logger: Logger) -> Result<Castle, Error> {
         if !json.is_array() {
-            return Err(Error::InvalidFormat);
+            return Err(ErrorKind::InvalidFormat("Castle json not an array".into()).into());
         }
         let json_array: &Vec<Json> = json.as_array().unwrap();
 
         if json_array.len() < 4 {
             // HACK to be able to run when there are special events
             error!(logger, "Parse error occured: json.len() < 4"; "json.len()" => json_array.len(), "owner_id" => owner_id, "json" => json::encode(json).unwrap_or_else(|e|format!("{:?}",e)));
-            return Err(Error::InvalidFormat);
+            return Err(ErrorKind::InvalidFormat(format!("Parse error: json.len() < 4, json.len == {}", json_array.len()).into()).into());
         }
 
         let world = json_array[0].as_u64().and_then(|world| Some(World::from_int(world)) ); // ain A M [] AP/VP [0] (world)
@@ -66,7 +66,7 @@ impl FieldAinM {
     /// Parse json data
     pub fn parse(json: &Json, logger: Logger) -> Result<Vec<FieldAinM>, Error> {
         if !json.is_array() {
-            return Err(Error::InvalidFormat);
+            return Err(ErrorKind::InvalidFormat("gbd::ain::m not an array".into()).into());
         }
         let json: &Vec<Json> = json.as_array().unwrap();
         return Ok(json.into_iter().map(|row|{
@@ -78,16 +78,10 @@ impl FieldAinM {
             DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
             
             let ap = row.get("AP").unwrap().as_array().unwrap(); // ain A M [] AP (base castles)
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).filter_map(|castle|castle.map_err(|err|{
-                error!(logger, "{}", err);
-                err
-            }).ok()).collect::<Vec<Castle>>();
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>().unwrap_pretty(logger.clone());
             
             let vp = row.get("VP").unwrap().as_array().unwrap(); // ain A M [] VP (support castles)
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).filter_map(|castle|castle.map_err(|err|{
-                error!(logger, "{}", err);
-                err
-            }).ok()).collect::<Vec<Castle>>();
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>().unwrap_pretty(logger.clone());
             
             FieldAinM{ oid: oid, n: n, ap: ap, vp: vp }
         }).collect::<Vec<FieldAinM>>());
@@ -109,7 +103,7 @@ impl Gbd {
         let data = data.trim_matches('%');
         let data = try!(Json::from_str(&data));
         if !data.is_object() {
-            return Err(Error::InvalidFormat);
+            return Err(ErrorKind::InvalidFormat("gbd not an object".into()).into());
         }
         let json_data = data.clone();
         let mut data = data.as_object().unwrap().clone();
@@ -118,7 +112,7 @@ impl Gbd {
         let ain = json_data.find_path(&["ain", "A", "M"]).unwrap(); // ain A M
         let ain = FieldAinM::parse(ain, logger).unwrap();
         let gbd = Gbd {
-            gpi: gpi.unwrap(),
+            gpi: try!(gpi.chain_err(||"Could not encode gdb::gpi")),
             ain: ain,
         };
         Ok(gbd)
