@@ -12,7 +12,7 @@ use gge::data::DATAMGR;
 
 #[test]
 fn read_from_server() {
-    let log_root = slog::Logger::root(
+    let logger = slog::Logger::root(
         slog::Fuse::new(
             slog::LevelFilter::new(slog_term::streamer().build(), slog::Level::Debug)
         ),
