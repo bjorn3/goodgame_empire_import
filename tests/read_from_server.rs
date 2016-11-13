@@ -5,6 +5,7 @@ extern crate slog_term;
 extern crate goodgame_empire_import as gge;
 use std::io::Write;
 
+use gge::error::ErrorExt;
 use gge::as_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};
@@ -22,7 +23,7 @@ fn read_from_server() {
     let un = std::env::var("GGE_USERNAME").unwrap();
     let pw = std::env::var("GGE_PASSWORD").unwrap();
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone());
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone()).unwrap_pretty(logger.clone());
 
     for pkt in con.read_packets() {
         process_packet(&mut con, pkt, logger.clone());
@@ -57,7 +58,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
             }
         },
         ServerPacket::Gdi(data) => {
-            gge::read_names(data);
+            gge::read_names(data, logger);
         },
         _ => {}
     };
