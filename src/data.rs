@@ -137,3 +137,87 @@ impl DataMgr {
         }
     }
 }
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+
+    #[test]
+    fn add_castle(){
+        use std::collections::HashMap;
+
+        let mut data_mgr = DataMgr::new();
+        data_mgr.add_castle(Castle{
+            id: 42,
+            owner_id: Some(84),
+            name: Some("some name".to_string()),
+            x: Some(10),
+            y: None,
+            world: Some(World::Grass)
+        });
+        data_mgr.add_castle(Castle{
+            id: 42,
+            owner_id: None,
+            name: None,
+            x: None,
+            y: Some(20),
+            world: None
+        });
+
+        let mut expected_castles = HashMap::new();
+        expected_castles.insert(42, Castle{
+            id: 42,
+            owner_id: Some(84),
+            name: Some("some name".to_string()),
+            x: Some(10),
+            y: Some(20),
+            world: Some(World::Grass)
+        });
+        
+        assert_eq!(data_mgr.castles, expected_castles);
+    }
+
+    #[test]
+    #[should_panic]
+    fn conflicting_castle_world(){
+        let mut data_mgr = DataMgr::new();
+        data_mgr.add_castle(Castle{
+            id: 42,
+            owner_id: Some(84),
+            name: Some("some name".to_string()),
+            x: Some(10),
+            y: None,
+            world: Some(World::Grass)
+        });
+        data_mgr.add_castle(Castle{
+            id: 42,
+            owner_id: None,
+            name: None,
+            x: None,
+            y: Some(20),
+            world: Some(World::Fire)
+        });
+    }
+
+    #[test]
+    #[should_panic]
+    fn conflicting_castle_position(){
+        let mut data_mgr = DataMgr::new();
+        data_mgr.add_castle(Castle{
+            id: 42,
+            owner_id: Some(84),
+            name: Some("some name".to_string()),
+            x: Some(10),
+            y: None,
+            world: Some(World::Grass)
+        });
+        data_mgr.add_castle(Castle{
+            id: 42,
+            owner_id: None,
+            name: None,
+            x: Some(11),
+            y: Some(20),
+            world: None
+        });
+    }
+}

@@ -53,7 +53,7 @@ impl SmartFoxClient {
     pub fn new(stream: TcpStream, room: &str, username: &str, password: &str, logger: Logger) -> Self {
         stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).unwrap();
 
-        let mut con = SmartFoxClient { stream: stream, logger: logger };
+        let mut con = SmartFoxClient { stream: stream, logger: logger.clone() };
 
         let ver_chk_msg = "<msg t='sys'><body action='verChk' r='0'><ver v='166' /></body></msg>";
         let _ = con.send_packet(SmartFoxPacket(ver_chk_msg.to_string()));
@@ -71,7 +71,7 @@ impl SmartFoxClient {
         );
 
         con.send_packet(SmartFoxPacket(login_header));
-        con.read_packets();
+        con.read_packets(logger);
 
         con
     }
@@ -104,13 +104,17 @@ impl SmartFoxClient {
     }
 
     /// Read zero terminated packets
-    pub fn read_packets(&mut self) -> Box<Iterator<Item = SmartFoxPacket>> {
+    pub fn read_packets(&mut self, logger: Logger) -> Box<Iterator<Item = SmartFoxPacket>> {
         static SPLIT: &'static [u8] = &[0x00];
         let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
         let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
 
         let data = splitter.map(|splited| {
             String::from_utf8(splited.unwrap()).expect("Malformed utf8 data provided by the server")
+        })
+        .map(move |data|{
+            trace!(logger.clone(), "Received data"; "data" => data);
+            data
         });
 
         Box::new(data.map(SmartFoxPacket))

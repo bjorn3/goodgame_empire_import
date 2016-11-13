@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// A server returned packet of data.
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum ServerPacket{
     /// Unrecognized data
     Data(String, String),
@@ -114,5 +114,32 @@ impl ClientPacket{
                 format!("%xt%EmpireEx_11%gaa%1%{}%", data)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test{
+    use super::*;
+
+    #[test]
+    fn parse_server_packet(){
+        assert_eq!(ServerPacket::new("%xt%lli%1%0%".to_string()), ServerPacket::Data("lli".to_string(), "".to_string()));
+        assert_eq!(ServerPacket::new("%xt%gbd%1%0%{\\\"gpi\\\":{\\\"UID\\\"".to_string()), ServerPacket::Gbd("{\\\"gpi\\\":{\\\"UID\\\"".to_string()));
+    }
+
+    #[test]
+    fn parse_invalid_server_packet(){
+        assert_eq!(ServerPacket::new("efroniveioej54549945wj9awjoawoiwa2322131298489439834#@*($&*($(*(*$@))))".to_string()), ServerPacket::Data("".to_string(), "efroniveioej54549945wj9awjoawoiwa2322131298489439834#@*($&*($(*(*$@))))".to_string()))
+    }
+
+    #[test]
+    fn display_server_packet(){
+        assert_eq!(format!("{:?}", ServerPacket::Irc("dsimoreoib".to_string())), "              (irc      ) ( dsimoreoib ... )".to_string());
+    }
+
+    #[test]
+    fn serialize_client_packet(){
+        assert_eq!(ClientPacket::Gdi(10).to_raw_data(), "%xt%EmpireEx_11%gdi%1%{\"PID\":10}%".to_string());
+        assert_eq!(ClientPacket::Gaa("agreverebcd".to_string()).to_raw_data(), "%xt%EmpireEx_11%gaa%1%agreverebcd%".to_string());
     }
 }

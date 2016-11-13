@@ -58,10 +58,10 @@ impl Connection {
     /// Read gge packets
     ///
     /// Ignores kpi and irc packets
-    pub fn read_packets(&mut self) -> Box<Iterator<Item = ServerPacket>> {
+    pub fn read_packets(&mut self, logger: Logger) -> Box<Iterator<Item = ServerPacket>> {
         //let logger = self.logger.clone();
         let data = self.smartfox
-            .read_packets()
+            .read_packets(logger)
             .map(|p| ServerPacket::new(p.data))
             .filter(|packet| {
                 // Ignore kpi and irc packets
