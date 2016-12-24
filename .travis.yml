@@ -11,3 +11,5 @@ os:
 matrix:
     allow_failures:
         - rust: nightly
+env:
+    - RUST_BACKTRACE=1
