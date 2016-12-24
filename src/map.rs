@@ -11,6 +11,35 @@ macro_rules! try_field{
     };
 }
 
+macro_rules! get{
+    ($a:ident.$field:ident as u64) => {
+        $a.as_object()
+            .ok_or(ErrorKind::InvalidFormat("Not a object".into()))?
+            .get(stringify!($field))
+            .ok_or(ErrorKind::InvalidFormat("Not a field".into()))?
+            .as_u64()
+            .ok_or(ErrorKind::InvalidFormat("Not an u64".into()))?;
+    };
+
+    ($a:ident.$field:ident as arr) => {
+        $a.as_object()
+            .ok_or(ErrorKind::InvalidFormat("Not a object".into()))?
+            .get(stringify!($field))
+            .ok_or(ErrorKind::InvalidFormat("Not a field".into()))?
+            .as_array()
+            .ok_or(ErrorKind::InvalidFormat("Not an array".into()))?;
+    };
+
+    ($a:ident.$field:ident as str) => {
+        $a.as_object()
+            .ok_or(ErrorKind::InvalidFormat("Not a object".into()))?
+            .get(stringify!($field))
+            .ok_or(ErrorKind::InvalidFormat("Not a field".into()))?
+            .as_str()
+            .ok_or(ErrorKind::InvalidFormat("Not a str".into()))?;
+    };
+}
+
 trait Flatten<T> {
     fn flatten(self) -> Option<T>;
 }
@@ -45,25 +74,25 @@ impl Gaa {
             return Err(ErrorKind::InvalidFormat("gaa not an object".into()).into());
         }
 
-        let data = data.as_object().unwrap().clone();
+        //let data = data.as_object().unwrap().clone();
 
-        let world = World::from_int(data.get("KID").unwrap().as_u64().unwrap());
+        let world = World::from_int(get!(data.KID as u64));
 
         let mut users = Vec::new();
         let mut castles = Vec::new();
         let mut castle_names = Vec::new();
 
-        for user in data.get("OI").unwrap().as_array().unwrap() {
-            let user = user.as_object().unwrap();
-            let user_id = user.get("OID").unwrap().as_u64().unwrap();
+        for user in get!(data.OI as arr) {
+            //let user = user.as_object().unwrap();
+            let user_id = get!(user.OID as u64);
             users.push(User {
                 id: user_id,
-                username: user.get("N").unwrap().as_str().map(ToString::to_string),
+                username: user.as_object().unwrap().get("N").unwrap().as_str().map(ToString::to_string),
                 own_alliance: false,
             });
 
-            let ap = user.get("AP").unwrap().as_array().unwrap();
-            let vp = user.get("VP").unwrap().as_array().unwrap();
+            let ap = get!(user.AP as arr);
+            let vp = get!(user.VP as arr);
 
             castles.extend_from_slice(&ap.iter()
                 .chain(vp.iter())
@@ -83,7 +112,7 @@ impl Gaa {
                 }).collect::<Vec<_>>());
         }
 
-        let ai_ = data.get("AI").unwrap().as_array().unwrap();
+        let ai_ = get!(data.AI as arr);
         for castle in ai_.iter() {
             let castle = castle.as_array().unwrap();
             if castle.len() < 10 {
