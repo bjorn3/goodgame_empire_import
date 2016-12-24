@@ -30,7 +30,7 @@ fn main() {
     let logger = slog::Logger::root(
         slog::Fuse::new(
             slog::Duplicate::new(
-                slog::LevelFilter::new(slog_term::streamer().build(), slog::Level::Debug),
+                slog::LevelFilter::new(slog_term::streamer().compact().build(), slog::Level::Debug),
                 slog_stream::stream(log_file, json_log_formatter)
             )
         ),
@@ -38,6 +38,8 @@ fn main() {
     );
 
     if let Err(ref e) = run(logger.clone()) {
+        let logger = logger.new(o!("error" => ""));
+
         error!(logger, "error: {}", e);
 
         for e in e.iter().skip(1) {
@@ -62,7 +64,7 @@ fn run(logger: slog::Logger) -> gge::error::Result<()> {
     let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone())?;
 
     for pkt in con.read_packets(logger.clone())? {
-        process_packet(&mut con, pkt, logger.clone())?;
+        process_packet(&mut con, pkt, logger.new(o!("process"=>"pre map")))?;
     }
 
     debug!(logger.clone(), "");
@@ -93,7 +95,7 @@ fn run(logger: slog::Logger) -> gge::error::Result<()> {
     debug!(logger.clone(), "");
 
     for pkt in con.read_packets(logger.clone())? {
-        process_packet(&mut con, pkt, logger.clone())?;
+        process_packet(&mut con, pkt, logger.new(o!("process"=>"post map")))?;
     }
 
     debug!(logger.clone(), "");
@@ -119,7 +121,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = gge::gbd::Gbd::parse(data.to_owned(), logger.clone()).chain_err(||"Couldnt read gdb packet")?;
+            let data = gge::gbd::Gbd::parse(data.to_owned(), logger.new(o!("packet"=>"gbd"))).chain_err(||"Couldnt read gdb packet")?;
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
@@ -129,11 +131,11 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
             }
         },
         ServerPacket::Gdi(data) => {
-            gge::read_names(data, logger)?;
+            gge::read_names(data, logger.new(o!("packet"=>"gdi")))?;
         },
         ServerPacket::Gaa(data) => {
             //trace!(logger, "gaa packet"; "data" => data);
-            let gaa = gge::map::Gaa::parse(data, logger.clone()).chain_err(||"Couldnt read gaa packet")?;
+            let gaa = gge::map::Gaa::parse(data, logger.new(o!("packet"=>"gaa"))).chain_err(||"Couldnt read gaa packet")?;
             for castle in gaa.castles.iter() {
                 DATAMGR.lock().unwrap().add_castle(castle.clone());
             }

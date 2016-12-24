@@ -30,12 +30,6 @@ pub struct Gaa {
     /// World
     pub kid: World,
 
-    /// Metadata
-    pub uap: String,
-
-    pub oi: String,
-    pub ai: String,
-
     // Parsed
     pub users: Vec<User>,
     pub castles: Vec<Castle>,
@@ -54,9 +48,6 @@ impl Gaa {
         let data = data.as_object().unwrap().clone();
 
         let world = World::from_int(data.get("KID").unwrap().as_u64().unwrap());
-        let uap = try_field!(data, "uap");
-        let oi = try_field!(data, "OI");
-        let ai = try_field!(data, "AI");
 
         let mut users = Vec::new();
         let mut castles = Vec::new();
@@ -118,10 +109,6 @@ impl Gaa {
 
         let gaa = Gaa {
             kid: world,
-            uap: uap,
-
-            oi: oi,
-            ai: ai,
 
             users: users,
             castles: castles,
