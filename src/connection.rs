@@ -59,10 +59,11 @@ impl Connection {
     /// Read gge packets
     ///
     /// Ignores kpi and irc packets
-    pub fn read_packets(&mut self, logger: Logger) -> Box<Iterator<Item = ServerPacket>> {
+    pub fn read_packets(&mut self, logger: Logger) -> Result<Box<Iterator<Item = ServerPacket>>> {
         //let logger = self.logger.clone();
         let data = self.smartfox
-            .read_packets(logger)
+            .read_packets(logger.clone())
+            .chain_err(||"Couldnt read packets")?
             .map(|p| ServerPacket::new(p.data).expect("Received invalid packet"))
             .filter(|packet| {
                 // Ignore kpi and irc packets
@@ -73,10 +74,10 @@ impl Connection {
                 }
             })
             .map(move |packet| {
-                //debug!(logger, " received packet"; "packet" => format!("{:?}", packet));
+                trace!(logger, " received packet"; "packet" => format!("{:?}", packet));
                 packet
             });
 
-        Box::new(data)
+        Ok(Box::new(data))
     }
 }

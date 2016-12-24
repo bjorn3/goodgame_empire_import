@@ -61,7 +61,7 @@ fn run(logger: slog::Logger) -> gge::error::Result<()> {
 
     let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone())?;
 
-    for pkt in con.read_packets(logger.clone()) {
+    for pkt in con.read_packets(logger.clone())? {
         process_packet(&mut con, pkt, logger.clone())?;
     }
 
@@ -92,7 +92,7 @@ fn run(logger: slog::Logger) -> gge::error::Result<()> {
 
     debug!(logger.clone(), "");
 
-    for pkt in con.read_packets(logger.clone()) {
+    for pkt in con.read_packets(logger.clone())? {
         process_packet(&mut con, pkt, logger.clone())?;
     }
 
@@ -119,7 +119,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = gge::gbd::Gbd::parse(data.to_owned(), logger.clone()).unwrap();
+            let data = gge::gbd::Gbd::parse(data.to_owned(), logger.clone()).chain_err(||"Couldnt read gdb packet")?;
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
@@ -133,7 +133,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
         },
         ServerPacket::Gaa(data) => {
             //trace!(logger, "gaa packet"; "data" => data);
-            let gaa = gge::map::Gaa::parse(data, logger.clone()).unwrap();
+            let gaa = gge::map::Gaa::parse(data, logger.clone()).chain_err(||"Couldnt read gaa packet")?;
             for castle in gaa.castles.iter() {
                 DATAMGR.lock().unwrap().add_castle(castle.clone());
             }
@@ -158,11 +158,11 @@ fn env_or_ask(env_name: &str, question: &str) -> String {
             } else {
                 Ok(data)
             }
-        }).or_else(|_| -> Result<String, io::Error> {
+        }).or_else(|_| -> error::Result<_> {
             let mut data = String::new();
             try!(io::stderr().write(question.as_bytes()));
             try!(io::stdin().read_line(&mut data));
-            Ok(data.trim().to_owned())
+            Ok(data.trim().to_string())
         }).unwrap()
 }
 
@@ -174,7 +174,5 @@ fn env_or_default(env_name: &str, default: &str) -> String {
             } else {
                 Ok(data)
             }
-        }).or_else(|_| -> Result<String, io::Error> {
-            Ok(default.trim().to_owned())
-        }).unwrap()
+        }).unwrap_or_else(|_| default.trim().to_string() )
 }

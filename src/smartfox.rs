@@ -53,13 +53,13 @@ impl SmartFoxClient {
     ///       </body></msg>
     /// ```
     pub fn new(stream: TcpStream, room: &str, username: &str, password: &str, logger: Logger) -> Result<Self> {
-        stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).unwrap();
+        stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).chain_err(||"Couldnt set stream timeout")?;
 
         let mut con = SmartFoxClient { stream: stream, logger: logger.clone() };
 
         let ver_chk_msg = "<msg t='sys'><body action='verChk' r='0'><ver v='166' /></body></msg>";
         let _ = con.send_packet(SmartFoxPacket(ver_chk_msg.to_string()));
-        let header = con.recv();
+        let header = con.recv().chain_err(||"Couldn't connect to server")?;
 
         if header != "<msg t='sys'><body action='apiOK' r='0'></body></msg>" {
             panic!("Invalid server version: {}", header);
@@ -72,26 +72,26 @@ impl SmartFoxClient {
             password
         );
 
-        con.send_packet(SmartFoxPacket(login_header))?;
-        con.read_packets(logger);
+        con.send_packet(SmartFoxPacket(login_header)).chain_err(||"Couldn't connect to server")?;
+        con.read_packets(logger).chain_err(||"Couldn't connect to server")?;
 
         Ok(con)
     }
 
     // raw connection
-    fn recv(&mut self) -> String {
+    fn recv(&mut self) -> Result<String> {
         let mut data = [0; 8192];
 
-        self.stream.read(&mut data).unwrap();
+        self.stream.read(&mut data).chain_err(||"Couldnt read from stream")?;
 
         let data = str::from_utf8(&data)
-            .expect("Malformed utf8 data provided by the server")
+            .chain_err(||"Malformed utf8 data provided by the server")?
             .trim_matches('\0')
             .to_string();
 
         trace!(self.logger.clone(), "   smartfox recv"; "data" => data.clone());
 
-        data
+        Ok(data)
     }
 
     // clean connection
@@ -104,9 +104,9 @@ impl SmartFoxClient {
     }
 
     /// Read zero terminated packets
-    pub fn read_packets(&mut self, logger: Logger) -> Box<Iterator<Item = SmartFoxPacket>> {
+    pub fn read_packets(&mut self, logger: Logger) -> Result<Box<Iterator<Item = SmartFoxPacket>>> {
         static SPLIT: &'static [u8] = &[0x00];
-        let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().unwrap()));
+        let buf_reader = Box::new(::std::io::BufReader::new(self.stream.try_clone().chain_err(||"Couldnt clone stream")?));
         let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
 
         let data = splitter.map(|splited| {
@@ -117,6 +117,6 @@ impl SmartFoxClient {
             data
         });
 
-        Box::new(data.map(SmartFoxPacket))
+        Ok(Box::new(data.map(SmartFoxPacket)))
     }
 }

@@ -21,17 +21,14 @@ pub trait CastleParse {
 
 impl CastleParse for Castle {
     fn parse(json: &Value, owner_id: u64, logger: Logger) -> Result<Castle, Error> {
-        if !json.is_array() {
-            return Err(ErrorKind::InvalidFormat("Castle json not an array".into()).into());
-        }
-        let json_array: &Vec<Value> = json.as_array().unwrap();
+        let json_array: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("Castle json not an array".into()))?;
 
         if json_array.len() < 4 {
             // HACK to be able to run when there are special events
             error!(logger, "Parse error occured: json.len() < 4"; "json.len()" => json_array.len(), "owner_id" => owner_id, "json" => ::serde_json::ser::to_string(json).unwrap_or_else(|e|format!("{:?}",e)));
             return Err(ErrorKind::InvalidFormat(format!("Parse error: json.len() < 4, json.len == {}", json_array.len()).into()).into());
         }
-
+        
         let world = json_array[0].as_u64().and_then(|world| Some(World::from_int(world)) ); // ain A M [] AP/VP [0] (world)
 
         let id = json_array[1].as_u64().ok_or(ErrorKind::InvalidFormat("field ain A M [] AP/VP [1] (id) not a positive number".into()))?; // ain A M [] AP/VP [1] (id)
@@ -65,10 +62,7 @@ pub struct FieldAinM {
 impl FieldAinM {
     /// Parse json data
     pub fn parse(json: &Value, logger: Logger) -> Result<Vec<FieldAinM>, Error> {
-        if !json.is_array() {
-            return Err(ErrorKind::InvalidFormat("gbd::ain::m not an array".into()).into());
-        }
-        let json: &Vec<Value> = json.as_array().unwrap();
+        let json: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("gbd::ain::m not an array".into()))?;
         return json.into_iter().map(|row|{
             let row = row.as_object().unwrap();
             
@@ -110,7 +104,7 @@ impl Gbd {
         data.remove("acl"); // remove chat from output
         let gpi = try_field!(data, "gpi");
         let ain = json_data.find_path(&["ain", "A", "M"]).unwrap(); // ain A M
-        let ain = FieldAinM::parse(ain, logger).unwrap();
+        let ain = FieldAinM::parse(ain, logger)?;
         let gbd = Gbd {
             gpi: gpi,
             ain: ain,

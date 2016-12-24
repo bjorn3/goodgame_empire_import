@@ -19,7 +19,7 @@ fn read_from_server() {
 
     let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone()).unwrap();
 
-    for pkt in con.read_packets(logger.clone()) {
+    for pkt in con.read_packets(logger.clone()).expect("Couldnt read packets") {
         process_packet(&mut con, pkt, logger.clone());
     }
 
