@@ -1,18 +1,26 @@
+#![feature(proc_macro)]
+
 #[macro_use]
 extern crate slog;
 #[macro_use]
 extern crate error_chain;
 
-extern crate rustc_serialize;
+//extern crate rustc_serialize;
 extern crate byte_stream_splitter;
 #[macro_use]
 extern crate lazy_static;
 extern crate regex;
 
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+
 use slog::*;
 
-pub use rustc_serialize::json::as_json;
-use rustc_serialize::json::Json;
+pub use serde_json::ser::to_string as to_json;
+use serde_json::from_str;
+use serde_json::value::Value;
 
 use data::DATAMGR;
 
@@ -46,7 +54,7 @@ pub fn read_castles(data: gbd::Gbd) {
 
 pub fn read_names(data: String, logger: Logger) {
     let data = data.trim_right_matches('%');
-    let data = Json::from_str(data).unwrap();
+    let data: Value = from_str(data).unwrap();
     let data = data.as_object().unwrap();
     let gcl = data.get("gcl").unwrap().as_object().unwrap(); // gcl
     let c = gcl.get("C").unwrap().as_array().unwrap(); // gcl C
@@ -59,9 +67,9 @@ pub fn read_names(data: String, logger: Logger) {
             let castle = castle.as_object().unwrap().get("AI").unwrap().as_array().unwrap(); // gcl C [] AI [] AI (castle)
             let castle_id = castle[3].as_u64().unwrap(); // gcl C [] AI [] AI [3] (id)
             let castle_name = if castle.len() == 18{
-                castle[10].as_string().unwrap() // gcl C [] AI [] AI [10] (name)
+                castle[10].as_str().unwrap() // gcl C [] AI [] AI [10] (name)
             }else if castle.len() == 10{
-                castle[6].as_string().unwrap()  // gcl C [] AI [] AI [6]  (name)
+                castle[6].as_str().unwrap()  // gcl C [] AI [] AI [6]  (name)
             }else{
                 panic!("Invalid gcl C [] AI [] AI length {}", castle.len())
             };

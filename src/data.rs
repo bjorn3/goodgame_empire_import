@@ -2,8 +2,6 @@ use std::fmt;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use rustc_serialize::json::as_json;
-
 lazy_static!{
     pub static ref DATAMGR: Mutex<DataMgr> = {
         Mutex::new(DataMgr::new())
@@ -11,7 +9,7 @@ lazy_static!{
 }
 
 /// World
-#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, Serialize)]
 pub enum World {
     /// Fire Peaks
     Fire,
@@ -40,7 +38,7 @@ impl World {
 }
 
 /// Castle data
-#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize)]
 pub struct Castle {
     /// Internal id
     pub id: u64,
@@ -57,7 +55,7 @@ pub struct Castle {
 }
 
 /// User data
-#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize)]
 pub struct User {
     /// Internal id
     pub id: u64,
@@ -69,12 +67,12 @@ pub struct User {
 
 impl fmt::Display for User {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", as_json(self))
+        write!(f, "{}", ::serde_json::ser::to_string(self).unwrap())
     }
 }
 
 /// Data manager
-#[derive(Debug, RustcEncodable)]
+#[derive(Debug, Serialize)]
 pub struct DataMgr {
     /// List of castles
     pub castles: HashMap<u64, Castle>,

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 
 use slog::*;
 
-use rustc_serialize::json;
+use serde_json::error::Error as SerdeJsonError;
 
 error_chain!{
     types{
@@ -12,9 +12,7 @@ error_chain!{
 
     foreign_links{
         io::Error, IoError;
-        json::ParserError,  JsonParserError;
-        json::DecoderError, JsonDecoderError;
-        json::EncoderError, JsonEncoderError;
+        SerdeJsonError, SerdeJsonError;
     }
 
     errors{

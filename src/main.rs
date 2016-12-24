@@ -13,7 +13,7 @@ use std::io;
 use std::io::Write;
 
 use gge::error::ErrorExt;
-use gge::as_json;
+use gge::to_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};
 use gge::data::DATAMGR;
@@ -80,7 +80,7 @@ fn main() {
 
     debug!(logger.clone(), "");
 
-    for castle in DATAMGR.lock().unwrap().castles.values().take(40) {
+    for castle in DATAMGR.lock().expect("Cant lock DATAMGR").castles.values().take(40) {
         info!(logger.clone(), "     read castle"; "castle" => format!("{:?}", castle));
     }
 
@@ -92,9 +92,9 @@ fn main() {
         .create(true)
         .truncate(true)
         .open(file_name)
-        .unwrap();
+        .expect("Cant open data file");
 
-    write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
+    write!(f, "{}", to_json(&*DATAMGR.lock().expect("Cant lock DATAMGR")).expect("Cant serialize data")).unwrap();
 }
 
 fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger) {
