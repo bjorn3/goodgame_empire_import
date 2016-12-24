@@ -14,7 +14,7 @@ use gge::data::DATAMGR;
 #[test]
 fn read_from_server() {
     let logger = slog::Logger::root(slog::Discard, o!());
-    
+
     let un = std::env::var("GGE_USERNAME").unwrap();
     let pw = std::env::var("GGE_PASSWORD").unwrap();
 

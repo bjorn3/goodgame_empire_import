@@ -58,7 +58,14 @@ pub fn read_names(data: String, logger: Logger) {
         for castle in world {
             let castle = castle.as_object().unwrap().get("AI").unwrap().as_array().unwrap(); // gcl C [] AI [] AI (castle)
             let castle_id = castle[3].as_u64().unwrap(); // gcl C [] AI [] AI [3] (id)
-            let castle_name = castle[10].as_string().unwrap(); // gcl C [] AI [] AI [10] (name)
+            let castle_name = if castle.len() == 18{
+                castle[10].as_string().unwrap() // gcl C [] AI [] AI [10] (name)
+            }else if castle.len() == 10{
+                castle[6].as_string().unwrap()  // gcl C [] AI [] AI [6]  (name)
+            }else{
+                panic!("Invalid gcl C [] AI [] AI length {}", castle.len())
+            };
+
             let castle = data::Castle {
                 id: castle_id,
                 owner_id: None,
