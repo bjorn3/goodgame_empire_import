@@ -12,7 +12,7 @@ use std::env;
 use std::io;
 use std::io::Write;
 
-use gge::error::ErrorExt;
+use gge::error::{self, ChainErr};
 use gge::to_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};
@@ -24,7 +24,7 @@ fn main() {
         .truncate(true)
         .write(true)
         .open("./log.json")
-        .unwrap();
+        .expect("Cant open log file log.json");
     let json_log_formatter = slog_json::new().set_newlines(true).add_default_keys().build();
 
     let logger = slog::Logger::root(
@@ -37,45 +37,63 @@ fn main() {
         o!("version" => env!("CARGO_PKG_VERSION"))
     );
 
-    io::stderr().write(b"Please login\n").unwrap();
+    if let Err(ref e) = run(logger.clone()) {
+        error!(logger, "error: {}", e);
+
+        for e in e.iter().skip(1) {
+            info!(logger, "caused by: {}", e);
+        }
+
+        // The backtrace is not always generated. Try to run this example
+        // with `RUST_BACKTRACE=1`.
+        if let Some(backtrace) = e.backtrace() {
+            println!("backtrace: {:?}", backtrace);
+        }
+
+        ::std::process::exit(1);
+    }
+}
+
+fn run(logger: slog::Logger) -> gge::error::Result<()> {
+    io::stderr().write(b"Please login\n").chain_err(||"Cant write to stderr")?;
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone()).unwrap_pretty(logger.clone());
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone())?;
 
     for pkt in con.read_packets(logger.clone()) {
-        process_packet(&mut con, pkt, logger.clone());
+        process_packet(&mut con, pkt, logger.clone())?;
     }
 
     debug!(logger.clone(), "");
 
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":806,"AY2":818,"KID":0,"AX1":338,"AX2":350}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":546,"AX2":558}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":559,"AX2":571}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":572,"AX2":584}"#.to_string()));
-    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":585,"AX2":597}"#.to_string()));
-    con.send_packet(ClientPacket::Gaa(r#"{"AX2":350,"KID":0,"AY1":806,"AY2":818,"AX1":338}"#.to_string()));
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":546,"AX2":558}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":559,"AX2":571}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":572,"AX2":584}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":546,"AX2":558}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":559,"AX2":571}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":689,"AY2":701,"KID":0,"AX1":572,"AX2":584}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":546,"AX2":558}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":559,"AX2":571}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":702,"AY2":714,"KID":0,"AX1":572,"AX2":584}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":806,"AY2":818,"KID":0,"AX1":338,"AX2":350}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":546,"AX2":558}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":559,"AX2":571}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":572,"AX2":584}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":559,"AX2":571}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":572,"AX2":584}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":650,"AY2":662,"KID":0,"AX1":585,"AX2":597}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":663,"AY2":675,"KID":0,"AX1":585,"AX2":597}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":676,"AY2":688,"KID":0,"AX1":585,"AX2":597}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":559,"AX2":571}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":572,"AX2":584}"#.to_string()))?;
+    //con.send_packet(ClientPacket::Gaa(r#"{"AY1":637,"AY2":649,"KID":0,"AX1":585,"AX2":597}"#.to_string()))?;
+    con.send_packet(ClientPacket::Gaa(r#"{"AX2":350,"KID":0,"AY1":806,"AY2":818,"AX1":338}"#.to_string()))?;
 
     debug!(logger.clone(), "");
 
     for pkt in con.read_packets(logger.clone()) {
-        process_packet(&mut con, pkt, logger.clone());
+        process_packet(&mut con, pkt, logger.clone())?;
     }
 
     debug!(logger.clone(), "");
@@ -92,12 +110,12 @@ fn main() {
         .create(true)
         .truncate(true)
         .open(file_name)
-        .expect("Cant open data file");
+        .chain_err(||"Cant open data file")?;
 
-    write!(f, "{}", to_json(&*DATAMGR.lock().expect("Cant lock DATAMGR")).expect("Cant serialize data")).unwrap();
+    write!(f, "{}", to_json(&*DATAMGR.lock().expect("Cant lock DATAMGR")).chain_err(||"Cant serialize data")?).chain_err(||"Cant write data to file")
 }
 
-fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger) {
+fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger) -> error::Result<()> {
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
@@ -107,11 +125,11 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
             let data_mgr = DATAMGR.lock().unwrap();
             let users = data_mgr.users.values().map(|user| user.clone()).collect::<Vec<_>>();
             for user in users {
-                con.send_packet(ClientPacket::Gdi(user.id));
+                con.send_packet(ClientPacket::Gdi(user.id))?;
             }
         },
         ServerPacket::Gdi(data) => {
-            gge::read_names(data, logger);
+            gge::read_names(data, logger)?;
         },
         ServerPacket::Gaa(data) => {
             //trace!(logger, "gaa packet"; "data" => data);
@@ -129,6 +147,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
         },
         _ => {}
     };
+    Ok(())
 }
 
 fn env_or_ask(env_name: &str, question: &str) -> String {

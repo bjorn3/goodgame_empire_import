@@ -1,5 +1,7 @@
 use std::fmt;
 
+use error::{Result, ChainErr};
+
 /// A server returned packet of data.
 #[derive(Clone, Eq, PartialEq)]
 pub enum ServerPacket{
@@ -41,16 +43,16 @@ pub enum ServerPacket{
 impl ServerPacket{
     /// Create a packet from text.
     /// Returns ServerPacket::Data when it does not recognize the data.
-    pub fn new(original_data: String) -> Self{
+    pub fn new(original_data: String) -> Result<Self>{
         use regex::Regex;
 
         if original_data.is_empty(){
-            return ServerPacket::None;
+            return Ok(ServerPacket::None);
         }
 
-        let regex = Regex::new(r"^%xt%([:word:]+)%1%0%(.*)$").unwrap();
+        let regex = Regex::new(r"^%xt%([:word:]+)%1%0%(.*)$").expect("Invalid packet regex");
 
-        if let Some(captures) = regex.captures(&original_data){
+        Ok(if let Some(captures) = regex.captures(&original_data){
             let name = captures.at(1).unwrap();
             let data = captures.at(2).unwrap();
             assert!(captures.at(3).is_none());
@@ -68,7 +70,7 @@ impl ServerPacket{
             }
         }else{
             ServerPacket::Data("".to_string(), original_data.to_string())
-        }
+        })
     }
 }
 

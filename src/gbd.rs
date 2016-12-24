@@ -2,7 +2,7 @@ use slog::*;
 
 use serde_json::value::Value;
 
-use error::{Error, ErrorKind, ErrorExt};
+use error::{Error, ErrorKind, ChainErr};
 use data::Castle;
 use data::World;
 use data::DATAMGR;
@@ -34,7 +34,7 @@ impl CastleParse for Castle {
 
         let world = json_array[0].as_u64().and_then(|world| Some(World::from_int(world)) ); // ain A M [] AP/VP [0] (world)
 
-        let id = json_array[1].as_u64().unwrap(); // ain A M [] AP/VP [1] (id)
+        let id = json_array[1].as_u64().ok_or(ErrorKind::InvalidFormat("field ain A M [] AP/VP [1] (id) not a positive number".into()))?; // ain A M [] AP/VP [1] (id)
         let x = json_array[2].as_u64(); // ain A M [] AP/VP [2] (x)
         let y = json_array[3].as_u64(); // ain A M [] AP/VP [3] (y)
 
@@ -69,7 +69,7 @@ impl FieldAinM {
             return Err(ErrorKind::InvalidFormat("gbd::ain::m not an array".into()).into());
         }
         let json: &Vec<Value> = json.as_array().unwrap();
-        return Ok(json.into_iter().map(|row|{
+        return json.into_iter().map(|row|{
             let row = row.as_object().unwrap();
             
             let oid = row.get("OID").unwrap().as_u64().unwrap(); // ain A M [] OID
@@ -78,13 +78,13 @@ impl FieldAinM {
             DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
             
             let ap = row.get("AP").unwrap().as_array().unwrap(); // ain A M [] AP (base castles)
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>().unwrap_pretty(logger.clone());
+            let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
             
             let vp = row.get("VP").unwrap().as_array().unwrap(); // ain A M [] VP (support castles)
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>().unwrap_pretty(logger.clone());
+            let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
             
-            FieldAinM{ oid: oid, n: n, ap: ap, vp: vp }
-        }).collect::<Vec<FieldAinM>>());
+            Ok(FieldAinM{ oid: oid, n: n, ap: ap, vp: vp })
+        }).collect::<Result<Vec<FieldAinM>, Error>>();
     }
 }
 

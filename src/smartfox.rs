@@ -5,6 +5,8 @@ use std::net::TcpStream;
 
 use slog::*;
 
+use error::{Result, ChainErr};
+
 pub struct SmartFoxPacket {
     pub data: String,
 }
@@ -50,7 +52,7 @@ impl SmartFoxClient {
     ///           </login>
     ///       </body></msg>
     /// ```
-    pub fn new(stream: TcpStream, room: &str, username: &str, password: &str, logger: Logger) -> Self {
+    pub fn new(stream: TcpStream, room: &str, username: &str, password: &str, logger: Logger) -> Result<Self> {
         stream.set_read_timeout(Some(::std::time::Duration::new(2, 0))).unwrap();
 
         let mut con = SmartFoxClient { stream: stream, logger: logger.clone() };
@@ -70,10 +72,10 @@ impl SmartFoxClient {
             password
         );
 
-        con.send_packet(SmartFoxPacket(login_header));
+        con.send_packet(SmartFoxPacket(login_header))?;
         con.read_packets(logger);
 
-        con
+        Ok(con)
     }
 
     // raw connection
@@ -95,12 +97,10 @@ impl SmartFoxClient {
     // clean connection
 
     /// Send a zero terminated packet
-    pub fn send_packet(&mut self, packet: SmartFoxPacket) {
+    pub fn send_packet(&mut self, packet: SmartFoxPacket) -> Result<()>{
         let data = packet.data + "\0";
-        self.stream.write(data.as_bytes()).unwrap();
-        if data.find("lli").is_some() {
-            return;
-        }
+        self.stream.write(data.as_bytes()).chain_err(||"Cant write to server stream")?;
+        Ok(())
     }
 
     /// Read zero terminated packets
