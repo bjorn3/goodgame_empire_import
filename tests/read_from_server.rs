@@ -6,7 +6,7 @@ extern crate goodgame_empire_import as gge;
 use std::io::Write;
 
 use gge::error::ErrorExt;
-use gge::as_json;
+use gge::to_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};
 use gge::data::DATAMGR;
@@ -36,7 +36,7 @@ fn read_from_server() {
         .open("data2.json")
         .unwrap();
 
-    write!(f, "{}", as_json(&*DATAMGR.lock().unwrap())).unwrap();
+    write!(f, "{}", to_json(&*DATAMGR.lock().unwrap())).unwrap();
 }
 
 fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger) {
