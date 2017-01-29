@@ -5,8 +5,6 @@ extern crate slog;
 #[macro_use]
 extern crate error_chain;
 
-//extern crate rustc_serialize;
-extern crate byte_stream_splitter;
 #[macro_use]
 extern crate lazy_static;
 extern crate regex;
@@ -23,7 +21,7 @@ use serde_json::from_str;
 use serde_json::value::Value;
 
 use data::DATAMGR;
-use error::ChainErr;
+use error::ResultExt;
 
 /// Error
 pub mod error;
@@ -39,6 +37,8 @@ pub mod map;
 pub mod smartfox;
 /// Goodgame empire connection
 pub mod connection;
+
+mod byte_stream_splitter;
 
 /// Read castles
 pub fn read_castles(data: gbd::Gbd) {

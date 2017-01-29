@@ -2,7 +2,7 @@ use slog::*;
 
 use serde_json::value::Value;
 
-use error::{Error, ErrorKind, ChainErr};
+use error::{Error, ErrorKind, ResultExt};
 use data::Castle;
 use data::World;
 use data::DATAMGR;
@@ -103,7 +103,7 @@ impl Gbd {
         let mut data = data.as_object().unwrap().clone();
         data.remove("acl"); // remove chat from output
         let gpi = try_field!(data, "gpi");
-        let ain = json_data.find_path(&["ain", "A", "M"]).unwrap(); // ain A M
+        let ain = json_data.pointer("/ain/A/M").unwrap(); // ain A M
         let ain = FieldAinM::parse(ain, logger)?;
         let gbd = Gbd {
             gpi: gpi,

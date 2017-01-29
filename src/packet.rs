@@ -1,6 +1,6 @@
 use std::fmt;
 
-use error::{Result, ChainErr};
+use error::{Result, ResultExt};
 
 /// A server returned packet of data.
 #[derive(Clone, Eq, PartialEq)]
@@ -50,12 +50,12 @@ impl ServerPacket{
             return Ok(ServerPacket::None);
         }
 
-        let regex = Regex::new(r"^%xt%([:word:]+)%1%0%(.*)$").expect("Invalid packet regex");
+        let regex = Regex::new(r"^%xt%([[:word:]]+)%1%0%(.*)$").expect("Invalid packet regex");
 
         Ok(if let Some(captures) = regex.captures(&original_data){
-            let name = captures.at(1).unwrap();
-            let data = captures.at(2).unwrap();
-            assert!(captures.at(3).is_none());
+            let name = captures.get(1).unwrap().as_str();
+            let data = captures.get(2).unwrap().as_str();
+            assert!(captures.get(3).is_none());
             match &*name{
                 "kpi"      => ServerPacket::Kpi    (data.to_string()),
                 "gam"      => ServerPacket::Gam    (data.to_string()),

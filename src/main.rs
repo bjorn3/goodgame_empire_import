@@ -4,15 +4,13 @@ extern crate slog_term;
 extern crate slog_stream;
 extern crate slog_json;
 
-#[macro_use]
-extern crate lazy_static;
 extern crate goodgame_empire_import as gge;
 
 use std::env;
 use std::io;
 use std::io::Write;
 
-use gge::error::{self, ChainErr};
+use gge::error::{self, ResultExt};
 use gge::to_json;
 use gge::packet::{ServerPacket, ClientPacket};
 use gge::connection::{Connection, DUTCH_SERVER};

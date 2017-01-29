@@ -5,12 +5,12 @@ use serde_json::error::Error as SerdeJsonError;
 
 error_chain!{
     types{
-        Error, ErrorKind, ChainErr, Result;
+        Error, ErrorKind, ResultExt, Result;
     }
 
     foreign_links{
-        io::Error, IoError;
-        SerdeJsonError, SerdeJsonError;
+        IoError(io::Error);
+        SerdeJsonError(SerdeJsonError);
     }
 
     errors{

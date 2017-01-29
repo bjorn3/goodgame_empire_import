@@ -5,7 +5,7 @@ use std::net::TcpStream;
 
 use slog::*;
 
-use error::{Result, ChainErr};
+use error::{Result, ResultExt};
 
 pub struct SmartFoxPacket {
     pub data: String,

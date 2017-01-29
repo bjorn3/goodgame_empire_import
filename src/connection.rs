@@ -3,7 +3,7 @@ use std::net::{TcpStream, IpAddr, Ipv4Addr};
 
 use slog::*;
 
-use error::{Result, ChainErr};
+use error::{Result, ResultExt};
 use smartfox::{SmartFoxClient, SmartFoxPacket};
 use packet::{ServerPacket, ClientPacket};
 
