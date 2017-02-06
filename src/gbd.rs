@@ -62,20 +62,29 @@ pub struct FieldAinM {
 impl FieldAinM {
     /// Parse json data
     pub fn parse(json: &Value, logger: Logger) -> Result<Vec<FieldAinM>, Error> {
+        #[derive(Deserialize)]
+        #[allow(non_snake_case)]
+        struct _FieldAinM__{
+            OID: u64,
+            N: String,
+            AP: Vec<Value>,
+            VP: Vec<Value>
+        }
+        
         let json: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("gbd::ain::m not an array".into()))?;
         return json.into_iter().map(|row|{
-            let row = row.as_object().unwrap();
+            let obj: _FieldAinM__ = ::serde_json::value::from_value(row.clone()).chain_err(||"gbd::ain::m not an array")?;
             
-            let oid = row.get("OID").unwrap().as_u64().unwrap(); // ain A M [] OID
-            let n = row.get("N").unwrap().as_str().unwrap().to_string(); // ain A M [] N (username)
+            let oid = obj.OID; // ain A M [] OID
+            let n = obj.N; // ain A M [] N (username)
             
             DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
             
-            let ap = row.get("AP").unwrap().as_array().unwrap(); // ain A M [] AP (base castles)
-            let ap = ap.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
+            let ap = obj.AP.into_iter().map(|cell|Castle::parse(&cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
+            //           ^^ ain A M [] AP (base castles)
             
-            let vp = row.get("VP").unwrap().as_array().unwrap(); // ain A M [] VP (support castles)
-            let vp = vp.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
+            let vp = obj.VP.into_iter().map(|cell|Castle::parse(&cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
+            //           ^^ ain A M [] VP (support castles)
             
             Ok(FieldAinM{ oid: oid, n: n, ap: ap, vp: vp })
         }).collect::<Result<Vec<FieldAinM>, Error>>();
