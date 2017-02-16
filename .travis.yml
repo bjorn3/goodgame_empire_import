@@ -2,15 +2,14 @@ sudo: false
 language: rust
 cache: cargo
 rust:
-# Disabled till serde works on stable
-# - stable
-# - beta
+ - stable
+ - beta
  - nightly
 os:
  - linux
  - osx
-#matrix:
-#    allow_failures:
-#        - rust: nightly
+matrix:
+    allow_failures:
+        - rust: nightly
 env:
     - RUST_BACKTRACE=1
