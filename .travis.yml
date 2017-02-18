@@ -7,7 +7,7 @@ rust:
  - nightly
 os:
  - linux
- - osx
+# - osx # Disabled because of long wait times and spurious travis errors
 matrix:
     allow_failures:
         - rust: nightly
