@@ -128,7 +128,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
             let data = slog_scope::scope(logger.new(o!("packet"=>"gdb")),
-                                         || gge::gbd::Gbd::parse(data.to_owned())).chain_err(||"Couldnt read gdb packet")?;
+                                         || gge::data_extractors::gbd::Gbd::parse_val(data.to_owned())).chain_err(||"Couldnt read gdb packet")?;
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
@@ -143,7 +143,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
         }
         ServerPacket::Gaa(data) => {
             trace!(logger, "gaa packet"; "data" => data);
-            let gaa = slog_scope::scope(logger.new(o!("packet"=>"gaa")), || gge::map::Gaa::parse(data)).chain_err(||"Couldnt read gaa packet")?;
+            let gaa = slog_scope::scope(logger.new(o!("packet"=>"gaa")), || gge::data_extractors::map::Gaa::parse(data)).chain_err(||"Couldnt read gaa packet")?;
             for castle in gaa.castles.iter() {
                 DATAMGR.lock().unwrap().add_castle(castle.clone());
             }

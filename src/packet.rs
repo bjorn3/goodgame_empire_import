@@ -1,9 +1,11 @@
 use std::fmt;
 
-use error::Result;
+use serde_json::{Value, from_str, to_string};
+
+use error::{Result, ResultExt};
 
 /// A server returned packet of data.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum ServerPacket {
     /// Unrecognized data
     Data(String, String),
@@ -16,7 +18,7 @@ pub enum ServerPacket {
 
     /// Main data source.
     /// Send by the server when you login.
-	Gbd(String),
+	Gbd(Value),
 
     /// Castle information of a specific user.
     Gdi(String),
@@ -56,12 +58,13 @@ impl ServerPacket {
 
         Ok(if let Some(captures) = PACKET_REGEX.captures(&original_data) {
             let name = captures.get(1).unwrap().as_str();
-            let data = captures.get(2).unwrap().as_str();
+            let data = captures.get(2).unwrap().as_str().trim_right_matches('%');
             assert!(captures.get(3).is_none());
+            println!("{:?}", data);
             match &*name {
                 "kpi"      => ServerPacket::Kpi    (data.to_string()),
                 "gam"      => ServerPacket::Gam    (data.to_string()),
-                "gbd"      => ServerPacket::Gbd    (data.to_string()),
+                "gbd"      => ServerPacket::Gbd    (from_str(data).chain_err(|| "Failed to parse gbd packet")?),
                 "gdi"      => ServerPacket::Gdi    (data.to_string()),
                 "irc"      => ServerPacket::Irc    (data.to_string()),
                 "sei"      => ServerPacket::Sei    (data.to_string()),
@@ -78,24 +81,24 @@ impl ServerPacket {
 
 impl fmt::Debug for ServerPacket{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        let (description, name, _data): (&'static str, &str, &str) = match *self{
-            ServerPacket::Data   (ref name, ref data) => ("unknown type"  , name      , data),
-            ServerPacket::Kpi    (ref data)           => (""              , "kpi"     , data),
-            ServerPacket::Gam    (ref data)           => (""              , "gam"     , data),
-	        ServerPacket::Gbd    (ref data)           => (""              , "gbd"     , data),
-            ServerPacket::Gdi    (ref data)           => (""              , "gdi"     , data),
-            ServerPacket::Sei    (ref data)           => (""              , "sei"     , data),
-            ServerPacket::Irc    (ref data)           => (""              , "irc"     , data),
-            ServerPacket::Nfo    (ref data)           => ("serverinfo"    , "nfo"     , data),
-            ServerPacket::CoreGpi(ref data)           => ("getplayerinfo" , "core_gpi", data),
-            ServerPacket::Gaa    (ref data)           => ("mapinfo"       , "gaa"     , data),
-            ServerPacket::None                        => ("none"          , ""        , ""  ),
+        let (description, name, data): (&'static str, String, String) = match self.clone(){
+            ServerPacket::Data   (name, data) => ("unknown type"  , name      , data),
+            ServerPacket::Kpi    (data)       => (""              , "kpi".to_string()      , data),
+            ServerPacket::Gam    (data)       => (""              , "gam".to_string()      , data),
+	        ServerPacket::Gbd    (data)       => (""              , "gbd".to_string()      , to_string(&data).unwrap()),
+            ServerPacket::Gdi    (data)       => (""              , "gdi".to_string()      , data),
+            ServerPacket::Sei    (data)       => (""              , "sei".to_string()      , data),
+            ServerPacket::Irc    (data)       => (""              , "irc".to_string()      , data),
+            ServerPacket::Nfo    (data)       => ("serverinfo"    , "nfo".to_string()      , data),
+            ServerPacket::CoreGpi(data)       => ("getplayerinfo" , "core_gpi".to_string() , data),
+            ServerPacket::Gaa    (data)       => ("mapinfo"       , "gaa".to_string()      , data),
+            ServerPacket::None                => ("none"          , "".to_string()         , "".to_string()),
         };
         write!(f,
                "{:13} ({:9}) ( {} ... )",
                description,
                name,
-               _data.chars().zip(0..64).map(|c| c.0).collect::<String>())
+               data.chars().take(64).collect::<String>())
     }
 }
 
@@ -129,8 +132,8 @@ mod test {
     fn parse_server_packet() {
         assert_eq!(ServerPacket::new("%xt%lli%1%0%".to_string()).unwrap(),
                    ServerPacket::Data("lli".to_string(), "".to_string()));
-        assert_eq!(ServerPacket::new("%xt%gbd%1%0%{\\\"gpi\\\":{\\\"UID\\\"".to_string()).unwrap(),
-                   ServerPacket::Gbd("{\\\"gpi\\\":{\\\"UID\\\"".to_string()));
+        assert_eq!(ServerPacket::new(r#"%xt%gbd%1%0%{"gpi":{"UID":0}}%"#.to_string()).unwrap(),
+                   ServerPacket::Gbd(from_str(r#"{"gpi":{"UID":0}}"#).unwrap()));
     }
 
     #[test]

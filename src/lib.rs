@@ -26,10 +26,8 @@ pub mod error;
 pub mod packet;
 /// Data
 pub mod data;
-/// Data reader
-pub mod gbd;
-/// Map reader
-pub mod map;
+/// Data extractors
+pub mod data_extractors;
 /// Smartfoxserver client
 pub mod smartfox;
 /// Goodgame empire connection
@@ -38,7 +36,7 @@ pub mod connection;
 mod byte_stream_splitter;
 
 /// Read castles
-pub fn read_castles(data: gbd::Gbd) {
+pub fn read_castles(data: data_extractors::gbd::Gbd) {
     for ain in data.ain {
         for castle in ain.ap {
             DATAMGR.lock().unwrap().add_castle(castle);

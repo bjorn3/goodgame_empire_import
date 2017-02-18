@@ -113,7 +113,6 @@ pub struct Gbd {
 impl Gbd {
     /// Parse text returned from the server
     pub fn parse(data: String) -> Result<Self> {
-        let data = data.trim_matches('%');
         let data: Value = try!(::serde_json::de::from_str(&data));
         if !data.is_object() {
             return Err(ErrorKind::InvalidFormat("gbd not an object".into()).into());
@@ -130,4 +129,40 @@ impl Gbd {
         };
         Ok(gbd)
     }
+
+    pub fn parse_val(data: Value) -> Result<Self> {
+        if !data.is_object() {
+            return Err(ErrorKind::InvalidFormat("gbd not an object".into()).into());
+        }
+        let json_data = data.clone();
+        let mut data = data.as_object().unwrap().clone();
+        data.remove("acl"); // remove chat from output
+        let gpi = try_field!(data, "gpi");
+        let ain = json_data.pointer("/ain/A/M").unwrap(); // ain A M
+        let ain = FieldAinM::parse(ain)?;
+        let gbd = Gbd {
+            gpi: gpi,
+            ain: ain,
+        };
+        Ok(gbd)
+    }
+}
+
+pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::data::DataMgr) -> Result<()>{
+    let data = ::slog_scope::scope(::slog_scope::logger().new(o!("packet"=>"gdb")),
+                                   || Gbd::parse_val(obj)).chain_err(||"Couldnt read gdb packet")?;
+    for ain in data.ain {
+        for castle in ain.ap {
+            DATAMGR.lock().unwrap().add_castle(castle);
+        }
+        for castle in ain.vp {
+            DATAMGR.lock().unwrap().add_castle(castle);
+        }
+    }
+
+    let users = data_mgr.users.values().map(|user| user.clone()).collect::<Vec<_>>();
+    for user in users {
+        con.send_packet(::packet::ClientPacket::Gdi(user.id))?;
+    }
+    Ok(())
 }

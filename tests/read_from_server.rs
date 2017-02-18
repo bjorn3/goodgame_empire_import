@@ -45,7 +45,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket, logger: slog::Logger)
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = gge::gbd::Gbd::parse(data.to_owned()).unwrap();
+            let data = gge::data_extractors::gbd::Gbd::parse_val(data.to_owned()).unwrap();
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
