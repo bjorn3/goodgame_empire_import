@@ -1,8 +1,8 @@
 use slog::*;
 
-use serde_json::value::Value;
+use serde_json::value::{Value, from_value};
 
-use error::{Error, ErrorKind, ResultExt};
+use error::{ErrorKind, Result, ResultExt};
 use data::Castle;
 use data::World;
 use data::DATAMGR;
@@ -16,16 +16,30 @@ macro_rules! try_field{
 /// Can parse castles
 pub trait CastleParse {
     /// Parse castle
-    fn parse(json: &Value, owner_id: u64, logger: Logger) -> Result<Self, Error> where Self: Sized;
+    fn parse(json: Value, owner_id: u64, logger: Logger) -> Result<Self> where Self: Sized;
 }
 
 impl CastleParse for Castle {
-    fn parse(json: &Value, owner_id: u64, logger: Logger) -> Result<Castle, Error> {
+    fn parse(json: Value, owner_id: u64, logger: Logger) -> Result<Castle> {
+        #[derive(Deserialize)]
+        #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
+        /// ain A M [] AP/VP
+        struct _FieldAinM__APVP(
+            World,
+            u64,
+            u64,
+            u64,
+            u64
+        );
+
+        let obj: _FieldAinM__APVP = from_value(json.clone()).chain_err(||"Cant deserialize gdb ain A M [] AP/VP")?;
+
         let json_array: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("Castle json not an array".into()))?;
 
         if json_array.len() < 4 {
             // HACK to be able to run when there are special events
-            error!(logger, "Parse error occured: json.len() < 4"; "json.len()" => json_array.len(), "owner_id" => owner_id, "json" => ::serde_json::ser::to_string(json).unwrap_or_else(|e|format!("{:?}",e)));
+            error!(logger, "Parse error occured: json.len() < 4"; "json.len()" => json_array.len(), "owner_id" => owner_id, "json" => ::serde_json::ser::to_string(&json).unwrap_or_else(|e|format!("{:?}",e)));
             return Err(ErrorKind::InvalidFormat(format!("Parse error: json.len() < 4, json.len == {}", json_array.len()).into()).into());
         }
         
@@ -61,9 +75,11 @@ pub struct FieldAinM {
 
 impl FieldAinM {
     /// Parse json data
-    pub fn parse(json: &Value, logger: Logger) -> Result<Vec<FieldAinM>, Error> {
+    pub fn parse(json: &Value, logger: Logger) -> Result<Vec<FieldAinM>> {
         #[derive(Deserialize)]
         #[allow(non_snake_case)]
+        #[allow(non_camel_case_types)]
+        /// ain A M []
         struct _FieldAinM__{
             OID: u64,
             N: String,
@@ -71,23 +87,23 @@ impl FieldAinM {
             VP: Vec<Value>
         }
         
-        let json: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("gbd::ain::m not an array".into()))?;
+        let json: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("gbd ain A M not an array".into()))?;
         return json.into_iter().map(|row|{
-            let obj: _FieldAinM__ = ::serde_json::value::from_value(row.clone()).chain_err(||"gbd::ain::m not an array")?;
+            let obj: _FieldAinM__ = from_value(row.clone()).chain_err(||"Cant deserialize gdb ain A M []")?;
             
             let oid = obj.OID; // ain A M [] OID
             let n = obj.N; // ain A M [] N (username)
             
             DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
             
-            let ap = obj.AP.into_iter().map(|cell|Castle::parse(&cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
+            let ap = obj.AP.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>>>()?;
             //           ^^ ain A M [] AP (base castles)
             
-            let vp = obj.VP.into_iter().map(|cell|Castle::parse(&cell, oid, logger.clone())).collect::<Result<Vec<Castle>, Error>>()?;
+            let vp = obj.VP.into_iter().map(|cell|Castle::parse(cell, oid, logger.clone())).collect::<Result<Vec<Castle>>>()?;
             //           ^^ ain A M [] VP (support castles)
             
             Ok(FieldAinM{ oid: oid, n: n, ap: ap, vp: vp })
-        }).collect::<Result<Vec<FieldAinM>, Error>>();
+        }).collect::<Result<Vec<FieldAinM>>>();
     }
 }
 
@@ -102,7 +118,7 @@ pub struct Gbd {
 
 impl Gbd {
     /// Parse text returned from the server
-    pub fn parse(data: String, logger: Logger) -> Result<Self, Error> {
+    pub fn parse(data: String, logger: Logger) -> Result<Self> {
         let data = data.trim_matches('%');
         let data: Value = try!(::serde_json::de::from_str(&data));
         if !data.is_object() {
