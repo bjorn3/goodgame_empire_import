@@ -1,5 +1,3 @@
-use slog::*;
-
 use serde_json::value::{Value, from_value};
 
 use error::{Error, ErrorKind, ResultExt};
@@ -32,7 +30,7 @@ pub struct Gaa {
 
 impl Gaa {
     /// Parse text returned from the server
-    pub fn parse(data: String, logger: Logger) -> Result<Self, Error> {
+    pub fn parse(data: String) -> Result<Self, Error> {
         #[derive(Deserialize)]
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
@@ -110,7 +108,7 @@ impl Gaa {
                 .map(Option::unwrap)
                 .map(ToString::to_string);
 
-            trace!(logger, "  process castle"; "castle" => ::serde_json::ser::to_string(castle).unwrap_or_else(|err|format!("{:?}", err)), "id" => id, "name" => name);
+            trace!(::slog_scope::logger(), "  process castle"; "castle" => ::serde_json::ser::to_string(castle).unwrap_or_else(|err|format!("{:?}", err)), "id" => id, "name" => name);
             castle_names.push(Castle {
                 id: id,
                 owner_id: None,

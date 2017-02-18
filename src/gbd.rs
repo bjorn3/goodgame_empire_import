@@ -1,5 +1,3 @@
-use slog::*;
-
 use serde_json::value::{Value, from_value};
 
 use error::{ErrorKind, Result, ResultExt};
@@ -61,7 +59,7 @@ pub struct FieldAinM {
 
 impl FieldAinM {
     /// Parse json data
-    pub fn parse(json: &Value, logger: Logger) -> Result<Vec<FieldAinM>> {
+    pub fn parse(json: &Value) -> Result<Vec<FieldAinM>> {
         #[derive(Deserialize)]
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
@@ -104,7 +102,7 @@ pub struct Gbd {
 
 impl Gbd {
     /// Parse text returned from the server
-    pub fn parse(data: String, logger: Logger) -> Result<Self> {
+    pub fn parse(data: String) -> Result<Self> {
         let data = data.trim_matches('%');
         let data: Value = try!(::serde_json::de::from_str(&data));
         if !data.is_object() {
@@ -115,7 +113,7 @@ impl Gbd {
         data.remove("acl"); // remove chat from output
         let gpi = try_field!(data, "gpi");
         let ain = json_data.pointer("/ain/A/M").unwrap(); // ain A M
-        let ain = FieldAinM::parse(ain, logger)?;
+        let ain = FieldAinM::parse(ain)?;
         let gbd = Gbd {
             gpi: gpi,
             ain: ain,

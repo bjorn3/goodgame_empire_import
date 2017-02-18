@@ -1,6 +1,6 @@
 use std::fmt;
 
-use error::{Result, ResultExt};
+use error::{Result};
 
 /// A server returned packet of data.
 #[derive(Clone, Eq, PartialEq)]
@@ -45,14 +45,16 @@ impl ServerPacket{
     /// Returns ServerPacket::Data when it does not recognize the data.
     pub fn new(original_data: String) -> Result<Self>{
         use regex::Regex;
+        
+        lazy_static!{
+            static ref PACKET_REGEX: Regex = Regex::new(r"^%xt%([[:word:]]+)%1%0%(.*)$").expect("Invalid packet regex");
+        }
 
         if original_data.is_empty(){
             return Ok(ServerPacket::None);
         }
 
-        let regex = Regex::new(r"^%xt%([[:word:]]+)%1%0%(.*)$").expect("Invalid packet regex");
-
-        Ok(if let Some(captures) = regex.captures(&original_data){
+        Ok(if let Some(captures) = PACKET_REGEX.captures(&original_data){
             let name = captures.get(1).unwrap().as_str();
             let data = captures.get(2).unwrap().as_str();
             assert!(captures.get(3).is_none());

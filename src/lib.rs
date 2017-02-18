@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate slog;
+extern crate slog_scope;
 #[macro_use]
 extern crate error_chain;
 
@@ -11,8 +12,6 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-
-use slog::*;
 
 pub use serde_json::ser::to_string as to_json;
 use serde_json::from_str;
@@ -50,7 +49,7 @@ pub fn read_castles(data: gbd::Gbd) {
     }
 }
 
-pub fn read_names(data: String, logger: Logger) -> error::Result<()> {
+pub fn read_names(data: String) -> error::Result<()> {
     let data = data.trim_right_matches('%');
     let data: Value = from_str(data).chain_err(||"Cant parse json in gge::read_names")?;
     let data = data.as_object().ok_or(error::ErrorKind::InvalidFormat("Root not a object in gge::read_names".into()))?;
@@ -79,7 +78,7 @@ pub fn read_names(data: String, logger: Logger) -> error::Result<()> {
                 y: None,
                 world: Some(world_name),
             };
-            debug!(logger, "processed castle";  "castle" => format!("{:?}", castle));
+            trace!(slog_scope::logger(), "processed castle";  "castle" => format!("{:?}", castle));
             DATAMGR.lock().unwrap().add_castle(castle);
         }
     }
