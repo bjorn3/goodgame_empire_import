@@ -1,8 +1,8 @@
 use slog::*;
 
-use serde_json::value::Value;
+use serde_json::value::{Value, from_value};
 
-use error::{Error, ErrorKind};
+use error::{Error, ErrorKind, ResultExt};
 use data::{User, Castle, World};
 
 macro_rules! try_field{
@@ -37,6 +37,12 @@ macro_rules! get{
             .ok_or(ErrorKind::InvalidFormat("Not a field".into()))?
             .as_str()
             .ok_or(ErrorKind::InvalidFormat("Not a str".into()))?;
+    };
+    ($a:ident.$field:ident as Value) => {
+        $a.as_object()
+            .ok_or(ErrorKind::InvalidFormat("Not a object".into()))?
+            .get(stringify!($field))
+            .ok_or(ErrorKind::InvalidFormat("Not a field".into()))?
     };
 }
 
@@ -76,7 +82,7 @@ impl Gaa {
 
         //let data = data.as_object().unwrap().clone();
 
-        let world = World::from_int(get!(data.KID as u64));
+        let world: World = from_value(get!(data.KID as Value).clone()).chain_err(||"gaa KID is not a world id")?;
 
         let mut users = Vec::new();
         let mut castles = Vec::new();

@@ -2,6 +2,8 @@ use std::fmt;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+use serde::de::{Deserialize, Deserializer, Visitor};
+
 lazy_static!{
     pub static ref DATAMGR: Mutex<DataMgr> = {
         Mutex::new(DataMgr::new())
@@ -12,28 +14,41 @@ lazy_static!{
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone, Serialize)]
 pub enum World {
     /// Fire Peaks
-    Fire,
+    Fire = 3,
     /// Burning Sands
-    Sand,
+    Sand = 1,
     /// Green
-    Grass,
+    Grass = 0,
     /// EW
-    Ice,
+    Ice = 2,
     /// Special Event
-    SpecialEvent,
+    SpecialEvent = 4,
 }
 
-impl World {
-    /// Get world from internal integer
-    pub fn from_int(num: u64) -> Self {
-        match num {
-            0 => World::Grass,
-            1 => World::Sand,
-            2 => World::Ice,
-            3 => World::Fire,
-            4 => World::SpecialEvent,
-            _ => panic!("Unrecognized world number {}", num),
+impl Deserialize for World{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer{
+        struct WorldVisitor;
+
+        impl Visitor for WorldVisitor{
+            type Value = World;
+
+            fn visit_u64<E: ::serde::de::Error>(self, v: u64) -> Result<Self::Value, E>{
+                match v {
+                    0 => Ok(World::Grass),
+                    1 => Ok(World::Sand),
+                    2 => Ok(World::Ice),
+                    3 => Ok(World::Fire),
+                    4 => Ok(World::SpecialEvent),
+                    _ => Err(::serde::de::Error::custom(format_args!("Unrecognized world number {}", v))),
+                }
+            }
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result{
+                write!(f, "an integer between 0 and 5")
+            }
         }
+
+        deserializer.deserialize_u8(WorldVisitor)
     }
 }
 

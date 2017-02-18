@@ -16,7 +16,7 @@ use slog::*;
 
 pub use serde_json::ser::to_string as to_json;
 use serde_json::from_str;
-use serde_json::value::Value;
+use serde_json::value::{Value, from_value};
 
 use data::DATAMGR;
 use error::ResultExt;
@@ -58,8 +58,7 @@ pub fn read_names(data: String, logger: Logger) -> error::Result<()> {
     let c = gcl.get("C").unwrap().as_array().unwrap(); // gcl C
     for world in c.iter() {
         let world = world.as_object().unwrap();
-        let world_name = world.get("KID").unwrap().as_u64().unwrap(); // gcl C [] KID
-        let world_name = data::World::from_int(world_name);
+        let world_name: data::World = from_value(world.get("KID").unwrap().clone()).unwrap(); // gcl C [] KID
         let world = world.get("AI").unwrap().as_array().unwrap(); // gcl C [] AI
         for castle in world {
             let castle = castle.as_object().unwrap().get("AI").unwrap().as_array().unwrap(); // gcl C [] AI [] AI (castle)
