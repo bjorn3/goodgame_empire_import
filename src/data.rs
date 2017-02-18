@@ -26,24 +26,30 @@ pub enum World {
 }
 
 impl Deserialize for World{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer
+    {
         struct WorldVisitor;
 
-        impl Visitor for WorldVisitor{
+        impl Visitor for WorldVisitor {
             type Value = World;
 
-            fn visit_u64<E: ::serde::de::Error>(self, v: u64) -> Result<Self::Value, E>{
+            fn visit_u64<E: ::serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
                 match v {
                     0 => Ok(World::Grass),
                     1 => Ok(World::Sand),
                     2 => Ok(World::Ice),
                     3 => Ok(World::Fire),
                     4 => Ok(World::SpecialEvent),
-                    _ => Err(::serde::de::Error::custom(format_args!("Unrecognized world number {}", v))),
+                    _ => {
+                        Err(::serde::de::Error::custom(
+                            format_args!("Unrecognized world number {}", v)
+                        ))
+                    }
                 }
             }
 
-            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result{
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 write!(f, "an integer between 0 and 5")
             }
         }
@@ -131,7 +137,7 @@ impl DataMgr {
                 castle.x = castle.x.or(old_castle.x);
                 castle.y = castle.y.or(old_castle.y);
                 castle.world = castle.world.or(old_castle.world);
-            },
+            }
             None => {}
         }
         self.castles.insert(castle.id, castle.clone());
@@ -152,39 +158,39 @@ impl DataMgr {
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
 
     #[test]
-    fn add_castle(){
+    fn add_castle() {
         use std::collections::HashMap;
 
         let mut data_mgr = DataMgr::new();
-        data_mgr.add_castle(Castle{
+        data_mgr.add_castle(Castle {
             id: 42,
             owner_id: Some(84),
             name: Some("some name".to_string()),
             x: Some(10),
             y: None,
-            world: Some(World::Grass)
+            world: Some(World::Grass),
         });
-        data_mgr.add_castle(Castle{
+        data_mgr.add_castle(Castle {
             id: 42,
             owner_id: None,
             name: None,
             x: None,
             y: Some(20),
-            world: None
+            world: None,
         });
 
         let mut expected_castles = HashMap::new();
-        expected_castles.insert(42, Castle{
+        expected_castles.insert(42, Castle {
             id: 42,
             owner_id: Some(84),
             name: Some("some name".to_string()),
             x: Some(10),
             y: Some(20),
-            world: Some(World::Grass)
+            world: Some(World::Grass),
         });
         
         assert_eq!(data_mgr.castles, expected_castles);
@@ -194,21 +200,21 @@ mod tests{
     #[should_panic]
     fn conflicting_castle_world(){
         let mut data_mgr = DataMgr::new();
-        data_mgr.add_castle(Castle{
+        data_mgr.add_castle(Castle {
             id: 42,
             owner_id: Some(84),
             name: Some("some name".to_string()),
             x: Some(10),
             y: None,
-            world: Some(World::Grass)
+            world: Some(World::Grass),
         });
-        data_mgr.add_castle(Castle{
+        data_mgr.add_castle(Castle {
             id: 42,
             owner_id: None,
             name: None,
             x: None,
             y: Some(20),
-            world: Some(World::Fire)
+            world: Some(World::Fire),
         });
     }
 
@@ -216,21 +222,21 @@ mod tests{
     #[should_panic]
     fn conflicting_castle_position(){
         let mut data_mgr = DataMgr::new();
-        data_mgr.add_castle(Castle{
+        data_mgr.add_castle(Castle {
             id: 42,
             owner_id: Some(84),
             name: Some("some name".to_string()),
             x: Some(10),
             y: None,
-            world: Some(World::Grass)
+            world: Some(World::Grass),
         });
-        data_mgr.add_castle(Castle{
+        data_mgr.add_castle(Castle {
             id: 42,
             owner_id: None,
             name: None,
             x: Some(11),
             y: Some(20),
-            world: None
+            world: None,
         });
     }
 }

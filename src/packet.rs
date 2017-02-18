@@ -1,10 +1,10 @@
 use std::fmt;
 
-use error::{Result};
+use error::Result;
 
 /// A server returned packet of data.
 #[derive(Clone, Eq, PartialEq)]
-pub enum ServerPacket{
+pub enum ServerPacket {
     /// Unrecognized data
     Data(String, String),
 
@@ -37,28 +37,28 @@ pub enum ServerPacket{
     Gaa(String),
 
     /// Empty packet.
-    None
+    None,
 }
 
-impl ServerPacket{
+impl ServerPacket {
     /// Create a packet from text.
     /// Returns ServerPacket::Data when it does not recognize the data.
-    pub fn new(original_data: String) -> Result<Self>{
+    pub fn new(original_data: String) -> Result<Self> {
         use regex::Regex;
         
-        lazy_static!{
+        lazy_static! {
             static ref PACKET_REGEX: Regex = Regex::new(r"^%xt%([[:word:]]+)%1%0%(.*)$").expect("Invalid packet regex");
         }
 
-        if original_data.is_empty(){
+        if original_data.is_empty() {
             return Ok(ServerPacket::None);
         }
 
-        Ok(if let Some(captures) = PACKET_REGEX.captures(&original_data){
+        Ok(if let Some(captures) = PACKET_REGEX.captures(&original_data) {
             let name = captures.get(1).unwrap().as_str();
             let data = captures.get(2).unwrap().as_str();
             assert!(captures.get(3).is_none());
-            match &*name{
+            match &*name {
                 "kpi"      => ServerPacket::Kpi    (data.to_string()),
                 "gam"      => ServerPacket::Gam    (data.to_string()),
                 "gbd"      => ServerPacket::Gbd    (data.to_string()),
@@ -70,7 +70,7 @@ impl ServerPacket{
                 "gaa"      => ServerPacket::Gaa    (data.to_string()),
                 _          => ServerPacket::Data   (name.to_string(), data.to_string())
             }
-        }else{
+        } else {
             ServerPacket::Data("".to_string(), original_data.to_string())
         })
     }
@@ -89,61 +89,66 @@ impl fmt::Debug for ServerPacket{
             ServerPacket::Nfo    (ref data)           => ("serverinfo"    , "nfo"     , data),
             ServerPacket::CoreGpi(ref data)           => ("getplayerinfo" , "core_gpi", data),
             ServerPacket::Gaa    (ref data)           => ("mapinfo"       , "gaa"     , data),
-            ServerPacket::None                        => ("none"          , ""        , ""  )
+            ServerPacket::None                        => ("none"          , ""        , ""  ),
         };
-        write!(f, "{:13} ({:9}) ( {} ... )", description, name, _data.chars().zip(0..64).map(|c|c.0).collect::<String>())
+        write!(f,
+               "{:13} ({:9}) ( {} ... )",
+               description,
+               name,
+               _data.chars().zip(0..64).map(|c| c.0).collect::<String>())
     }
 }
 
 /// A client send packet of data
 #[derive(Debug)]
-pub enum ClientPacket{
+pub enum ClientPacket {
     /// Ask for user castles
     Gdi(u64),
 
     /// Ask for world map
     Gaa(String),
 
-    None
+    None,
 }
 
-impl ClientPacket{
-    pub fn to_raw_data(&self) -> String{
-        match *self{
+impl ClientPacket {
+    pub fn to_raw_data(&self) -> String {
+        match *self {
             ClientPacket::None => String::new(),
-            ClientPacket::Gdi(uid) => {
-                format!("%xt%EmpireEx_11%gdi%1%{{\"PID\":{}}}%", uid)
-            },
-            ClientPacket::Gaa(ref data) => {
-                format!("%xt%EmpireEx_11%gaa%1%{}%", data)
-            }
+            ClientPacket::Gdi(uid) => format!("%xt%EmpireEx_11%gdi%1%{{\"PID\":{}}}%", uid),
+            ClientPacket::Gaa(ref data) => format!("%xt%EmpireEx_11%gaa%1%{}%", data),
         }
     }
 }
 
 #[cfg(test)]
-mod test{
+mod test {
     use super::*;
 
     #[test]
-    fn parse_server_packet(){
-        assert_eq!(ServerPacket::new("%xt%lli%1%0%".to_string()).unwrap(), ServerPacket::Data("lli".to_string(), "".to_string()));
-        assert_eq!(ServerPacket::new("%xt%gbd%1%0%{\\\"gpi\\\":{\\\"UID\\\"".to_string()).unwrap(), ServerPacket::Gbd("{\\\"gpi\\\":{\\\"UID\\\"".to_string()));
+    fn parse_server_packet() {
+        assert_eq!(ServerPacket::new("%xt%lli%1%0%".to_string()).unwrap(),
+                   ServerPacket::Data("lli".to_string(), "".to_string()));
+        assert_eq!(ServerPacket::new("%xt%gbd%1%0%{\\\"gpi\\\":{\\\"UID\\\"".to_string()).unwrap(),
+                   ServerPacket::Gbd("{\\\"gpi\\\":{\\\"UID\\\"".to_string()));
     }
 
     #[test]
-    fn parse_invalid_server_packet(){
+    fn parse_invalid_server_packet() {
         assert_eq!(ServerPacket::new("efroniveioej54549945wj9awjoawoiwa2322131298489439834#@*($&*($(*(*$@))))".to_string()).unwrap(), ServerPacket::Data("".to_string(), "efroniveioej54549945wj9awjoawoiwa2322131298489439834#@*($&*($(*(*$@))))".to_string()))
     }
 
     #[test]
-    fn display_server_packet(){
-        assert_eq!(format!("{:?}", ServerPacket::Irc("dsimoreoib".to_string())), "              (irc      ) ( dsimoreoib ... )".to_string());
+    fn display_server_packet() {
+        assert_eq!(format!("{:?}", ServerPacket::Irc("dsimoreoib".to_string())),
+                   "              (irc      ) ( dsimoreoib ... )".to_string());
     }
 
     #[test]
-    fn serialize_client_packet(){
-        assert_eq!(ClientPacket::Gdi(10).to_raw_data(), "%xt%EmpireEx_11%gdi%1%{\"PID\":10}%".to_string());
-        assert_eq!(ClientPacket::Gaa("agreverebcd".to_string()).to_raw_data(), "%xt%EmpireEx_11%gaa%1%agreverebcd%".to_string());
+    fn serialize_client_packet() {
+        assert_eq!(ClientPacket::Gdi(10).to_raw_data(),
+                   "%xt%EmpireEx_11%gdi%1%{\"PID\":10}%".to_string());
+        assert_eq!(ClientPacket::Gaa("agreverebcd".to_string()).to_raw_data(),
+                   "%xt%EmpireEx_11%gaa%1%agreverebcd%".to_string());
     }
 }

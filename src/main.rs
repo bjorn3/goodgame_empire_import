@@ -50,7 +50,7 @@ fn main() {
         // The backtrace is not always generated. Try to run this example
         // with `RUST_BACKTRACE=1`.
         if let Some(backtrace) = e.backtrace() {
-            println!("backtrace: {:?}", backtrace);
+            info!(logger, "backtrace: {:?}", backtrace);
         }
 
         crit!(logger, "Aborting due to previous error");
@@ -61,14 +61,15 @@ fn main() {
 
 fn run() -> gge::error::Result<()> {
     let logger = slog_scope::logger();
-    io::stderr().write(b"Please login\n").chain_err(||"Cant write to stderr")?;
+    io::stderr().write(b"Please login\n").chain_err(|| "Cant write to stderr")?;
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
     let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone())?;
 
     for pkt in con.read_packets(logger.clone())? {
-        slog_scope::scope(logger.new(o!("process"=>"pre map")), || process_packet(&mut con, pkt))?;
+        slog_scope::scope(logger.new(o!("process"=>"pre map")),
+                          || process_packet(&mut con, pkt))?;
     }
 
     debug!(logger.clone(), "");
@@ -126,7 +127,8 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = slog_scope::scope(logger.new(o!("packet"=>"gdb")), || gge::gbd::Gbd::parse(data.to_owned())).chain_err(||"Couldnt read gdb packet")?;
+            let data = slog_scope::scope(logger.new(o!("packet"=>"gdb")),
+                                         || gge::gbd::Gbd::parse(data.to_owned())).chain_err(||"Couldnt read gdb packet")?;
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
@@ -134,10 +136,11 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
             for user in users {
                 con.send_packet(ClientPacket::Gdi(user.id))?;
             }
-        },
+        }
         ServerPacket::Gdi(data) => {
-            slog_scope::scope(logger.new(o!("packet"=>"gdi")), || gge::read_names(data))?;
-        },
+            slog_scope::scope(logger.new(o!("packet"=>"gdi")),
+                              || gge::read_names(data))?;
+        }
         ServerPacket::Gaa(data) => {
             trace!(logger, "gaa packet"; "data" => data);
             let gaa = slog_scope::scope(logger.new(o!("packet"=>"gaa")), || gge::map::Gaa::parse(data)).chain_err(||"Couldnt read gaa packet")?;
@@ -151,7 +154,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
                 DATAMGR.lock().unwrap().users.insert(user.id, user.clone());
             }
             //trace!(logger, "gaa  data"; "parsed" => format!("{:?}", gaa));
-        },
+        }
         _ => {}
     };
     Ok(())
@@ -165,12 +168,14 @@ fn env_or_ask(env_name: &str, question: &str) -> String {
             } else {
                 Ok(data)
             }
-        }).or_else(|_| -> error::Result<_> {
+        })
+        .or_else(|_| -> error::Result<_> {
             let mut data = String::new();
             try!(io::stderr().write(question.as_bytes()));
             try!(io::stdin().read_line(&mut data));
             Ok(data.trim().to_string())
-        }).unwrap()
+        })
+        .unwrap()
 }
 
 fn env_or_default(env_name: &str, default: &str) -> String {
@@ -181,5 +186,6 @@ fn env_or_default(env_name: &str, default: &str) -> String {
             } else {
                 Ok(data)
             }
-        }).unwrap_or_else(|_| default.trim().to_string() )
+        })
+        .unwrap_or_else(|_| default.trim().to_string() )
 }

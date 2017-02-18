@@ -23,15 +23,10 @@ impl CastleParse for Castle {
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         /// ain A M [] AP/VP
-        struct _FieldAinM__APVP(
-            World,
-            u64,
-            u64,
-            u64,
-            u64
-        );
+        struct _FieldAinM__APVP(World, u64, u64, u64, u64);
 
-        let obj: _FieldAinM__APVP = from_value(json.clone()).chain_err(||"Cant deserialize gdb ain A M [] AP/VP")?;
+        let obj: _FieldAinM__APVP = from_value(json.clone())
+            .chain_err(|| "Cant deserialize gdb ain A M [] AP/VP")?;
 
         Ok(Castle {
             id: obj.1, // ain A M [] AP/VP [1] (id)
@@ -64,30 +59,45 @@ impl FieldAinM {
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
         /// ain A M []
-        struct _FieldAinM__{
+        struct _FieldAinM__ {
             OID: u64,
             N: String,
             AP: Vec<Value>,
-            VP: Vec<Value>
+            VP: Vec<Value>,
         }
-        
-        let json: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat("gbd ain A M not an array".into()))?;
-        return json.into_iter().map(|row|{
-            let obj: _FieldAinM__ = from_value(row.clone()).chain_err(||"Cant deserialize gdb ain A M []")?;
-            
-            let oid = obj.OID; // ain A M [] OID
-            let n = obj.N; // ain A M [] N (username)
-            
-            DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
-            
-            let ap = obj.AP.into_iter().map(|cell|Castle::parse(cell, oid)).collect::<Result<Vec<Castle>>>()?;
-            //           ^^ ain A M [] AP (base castles)
-            
-            let vp = obj.VP.into_iter().map(|cell|Castle::parse(cell, oid)).collect::<Result<Vec<Castle>>>()?;
-            //           ^^ ain A M [] VP (support castles)
-            
-            Ok(FieldAinM{ oid: oid, n: n, ap: ap, vp: vp })
-        }).collect::<Result<Vec<FieldAinM>>>();
+
+        let json: &Vec<Value> = json.as_array()
+            .ok_or(ErrorKind::InvalidFormat("gbd ain A M not an array".into()))?;
+        return json.into_iter()
+            .map(|row| {
+                let obj: _FieldAinM__ = from_value(row.clone())
+                    .chain_err(|| "Cant deserialize gdb ain A M []")?;
+
+                let oid = obj.OID; // ain A M [] OID
+                let n = obj.N; // ain A M [] N (username)
+
+                DATAMGR.lock().unwrap().add_owner_name(oid, &n, true);
+
+                let ap = obj.AP
+                //           ^^ ain A M [] AP (base castles)
+                    .into_iter()
+                    .map(|cell| Castle::parse(cell, oid))
+                    .collect::<Result<Vec<Castle>>>()?;
+
+                let vp = obj.VP
+                //           ^^ ain A M [] VP (support castles)
+                    .into_iter()
+                    .map(|cell| Castle::parse(cell, oid))
+                    .collect::<Result<Vec<Castle>>>()?;
+
+                Ok(FieldAinM {
+                    oid: oid,
+                    n: n,
+                    ap: ap,
+                    vp: vp,
+                })
+            })
+            .collect::<Result<Vec<FieldAinM>>>();
     }
 }
 
