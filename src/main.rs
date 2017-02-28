@@ -5,7 +5,7 @@ extern crate slog_term;
 extern crate slog_stream;
 extern crate slog_json;
 
-extern crate goodgame_empire_import as gge;
+extern crate gge;
 
 use std::env;
 use std::io;

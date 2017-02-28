@@ -1,15 +1,15 @@
 [package]
-name = "goodgame_empire_import"
+name = "gge"
 version = "0.1.1"
 authors = ["bjorn"]
 
 [lib]
-name = "goodgame_empire_import"
+name = "gge"
 path = "src/lib.rs"
 doc = true
 
 [[bin]]
-name = "goodgame_empire_import"
+name = "gge"
 path = "src/main.rs"
 doc = false
 
