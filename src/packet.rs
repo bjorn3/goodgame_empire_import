@@ -60,7 +60,7 @@ impl ServerPacket {
             let name = captures.get(1).unwrap().as_str();
             let data = captures.get(2).unwrap().as_str().trim_right_matches('%');
             assert!(captures.get(3).is_none());
-            println!("{:?}", data);
+            //println!("{:?}", data);
             match &*name {
                 "kpi"      => ServerPacket::Kpi    (data.to_string()),
                 "gam"      => ServerPacket::Gam    (data.to_string()),
