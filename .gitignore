@@ -1,6 +1,8 @@
 data.json
 data2.json
 log.json
+raw_data.bin
+*.log
 
 # Compiled files
 *.o

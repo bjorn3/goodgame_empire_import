@@ -14,7 +14,7 @@ use std::io::Write;
 use gge::error::{self, ResultExt};
 use gge::to_json;
 use gge::packet::{ServerPacket, ClientPacket};
-use gge::connection::{Connection, DUTCH_SERVER};
+use gge::connection::{Connection, LOCAL_SERVER, DUTCH_SERVER};
 use gge::data::DATAMGR;
 
 fn main() {
@@ -65,7 +65,7 @@ fn run() -> gge::error::Result<()> {
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone())?;
+    let mut con = Connection::new(*LOCAL_SERVER, &un, &pw, logger.clone())?;
 
     for pkt in con.read_packets(logger.clone())? {
         slog_scope::scope(logger.new(o!("process"=>"pre map")),

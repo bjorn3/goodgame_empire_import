@@ -1,5 +1,5 @@
 use std::str;
-use std::net::{TcpStream, IpAddr, Ipv4Addr};
+use std::net::{TcpStream, SocketAddr};
 
 use slog::*;
 
@@ -15,7 +15,9 @@ pub struct Connection {
 
 lazy_static!{
     /// The Dutch server (37.48.88.129)
-    pub static ref DUTCH_SERVER: IpAddr = IpAddr::V4(Ipv4Addr::new(37, 48, 88, 129));
+    pub static ref DUTCH_SERVER: SocketAddr = "37.48.88.129:443".parse().unwrap();
+    /// Local server (127.0.0.1:8081)
+    pub static ref LOCAL_SERVER: SocketAddr = "127.0.0.1:8081".parse().unwrap();
 }
 
 impl Connection {
@@ -31,8 +33,8 @@ impl Connection {
     /// ```xml
     /// send: %xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"<#password#>","AID":"1456064275209394654","NOM":"<#username#>","RTM":129,"LANG":"nl"}%
     /// ```
-    pub fn new(server: IpAddr, un: &str, pw: &str, logger: Logger) -> Result<Self> {
-        let stream = try!(TcpStream::connect((server, 443))
+    pub fn new(server: SocketAddr, un: &str, pw: &str, logger: Logger) -> Result<Self> {
+        let stream = try!(TcpStream::connect(server)
             .chain_err(|| "Can't connect to server"));
         try!(stream.set_read_timeout(Some(::std::time::Duration::new(2, 0)))
             .chain_err(|| "Can't set server connection timeout"));

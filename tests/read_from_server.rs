@@ -8,7 +8,7 @@ use std::io::Write;
 
 use gge::to_json;
 use gge::packet::{ServerPacket, ClientPacket};
-use gge::connection::{Connection, DUTCH_SERVER};
+use gge::connection::{Connection, LOCAL_SERVER, DUTCH_SERVER};
 use gge::data::DATAMGR;
 
 #[test]
@@ -20,7 +20,7 @@ fn read_from_server() {
     let un = std::env::var("GGE_USERNAME").unwrap();
     let pw = std::env::var("GGE_PASSWORD").unwrap();
 
-    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone()).unwrap();
+    let mut con = Connection::new(*LOCAL_SERVER, &un, &pw, logger.clone()).unwrap();
 
     for pkt in con.read_packets(logger.clone()).expect("Couldnt read packets") {
         process_packet(&mut con, pkt, logger.clone());

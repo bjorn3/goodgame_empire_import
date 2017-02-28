@@ -13,6 +13,11 @@ name = "gge"
 path = "src/main.rs"
 doc = false
 
+[[bin]]
+name = "dummy_gge_server"
+path = "src/bin/dummy_gge_server.rs"
+doc = false
+
 [dependencies]
 slog = { version = "1.4", features = ["max_level_trace"] }
 slog-scope = "0.2"
