@@ -45,7 +45,7 @@ impl Connection {
             logger: logger
         };
 
-        let login_code = r##"%xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"{pw}","AID":"1456064275209394654","NOM":"{un}","RTM":129,"LANG":"nl"}%"##.to_string().replace("{pw}", pw).replace("{un}", un);
+        let login_code = r##"%xt%EmpireEx_11%lli%1%{"RTM":32,"FID":null,"ID":0,"PW":"{pw}","FTK":null,"REF":"http://empire.goodgamestudios.com","FAID":null,"KID":"","LANG":"nl","NOM":"{un}","AID":"1433061122034798333","CONM":182,"DID":""}%"##.to_string().replace("{pw}", pw).replace("{un}", un);
 
         con.smartfox.send_packet(SmartFoxPacket(login_code))?;
 
