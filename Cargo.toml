@@ -34,3 +34,9 @@ regex = "0.2"
 serde = "0.9"
 serde_derive = "0.9"
 serde_json = "0.9"
+
+futures = "0.1"
+tokio-core = "0.1"
+tokio-service = "0.1"
+
+smartfox = { git = "https://github.com/bjorn3/smartfox_rust", version = "0.1.0" }

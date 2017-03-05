@@ -13,6 +13,8 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
+extern crate smartfox as smartfox_c;
+
 pub use serde_json::ser::to_string as to_json;
 use serde_json::from_str;
 use serde_json::value::{Value, from_value};

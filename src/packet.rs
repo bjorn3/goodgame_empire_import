@@ -1,6 +1,7 @@
 use std::fmt;
 
 use serde_json::{Value, from_str, to_string};
+use smartfox_c::packet;
 
 use error::{Result, ResultExt};
 
@@ -46,32 +47,19 @@ impl ServerPacket {
     /// Create a packet from text.
     /// Returns ServerPacket::Data when it does not recognize the data.
     pub fn new(original_data: String) -> Result<Self> {
-        use regex::Regex;
-        
-        lazy_static! {
-            static ref PACKET_REGEX: Regex = Regex::new(r"^%xt%([[:word:]]+)%1%0%(.*)$").expect("Invalid packet regex");
-        }
-
-        if original_data.is_empty() {
-            return Ok(ServerPacket::None);
-        }
-
-        Ok(if let Some(captures) = PACKET_REGEX.captures(&original_data) {
-            let name = captures.get(1).unwrap().as_str();
-            let data = captures.get(2).unwrap().as_str().trim_right_matches('%');
-            assert!(captures.get(3).is_none());
-            //println!("{:?}", data);
-            match &*name {
-                "kpi"      => ServerPacket::Kpi    (data.to_string()),
-                "gam"      => ServerPacket::Gam    (data.to_string()),
-                "gbd"      => ServerPacket::Gbd    (from_str(data).chain_err(|| "Failed to parse gbd packet")?),
-                "gdi"      => ServerPacket::Gdi    (data.to_string()),
-                "irc"      => ServerPacket::Irc    (data.to_string()),
-                "sei"      => ServerPacket::Sei    (data.to_string()),
-                "nfo"      => ServerPacket::Nfo    (data.to_string()),
-                "core_gpi" => ServerPacket::CoreGpi(data.to_string()),
-                "gaa"      => ServerPacket::Gaa    (data.to_string()),
-                _          => ServerPacket::Data   (name.to_string(), data.to_string())
+        let pkt = original_data.parse::<packet::Packet>().unwrap();
+        Ok(if !pkt.name.is_empty(){
+            match &*pkt.name {
+                "kpi"      => ServerPacket::Kpi    (pkt.data.to_string()),
+                "gam"      => ServerPacket::Gam    (pkt.data.to_string()),
+                "gbd"      => ServerPacket::Gbd    (from_str(&pkt.data).chain_err(|| format!("Failed to parse gbd packet: {}", &pkt.data))?),
+                "gdi"      => ServerPacket::Gdi    (pkt.data.to_string()),
+                "irc"      => ServerPacket::Irc    (pkt.data.to_string()),
+                "sei"      => ServerPacket::Sei    (pkt.data.to_string()),
+                "nfo"      => ServerPacket::Nfo    (pkt.data.to_string()),
+                "core_gpi" => ServerPacket::CoreGpi(pkt.data.to_string()),
+                "gaa"      => ServerPacket::Gaa    (pkt.data.to_string()),
+                _          => ServerPacket::Data   (pkt.name.to_string(), pkt.data.to_string())
             }
         } else {
             ServerPacket::Data("".to_string(), original_data.to_string())
@@ -110,14 +98,11 @@ pub enum ClientPacket {
 
     /// Ask for world map
     Gaa(String),
-
-    None,
 }
 
 impl ClientPacket {
     pub fn to_raw_data(&self) -> String {
         match *self {
-            ClientPacket::None => String::new(),
             ClientPacket::Gdi(uid) => format!("%xt%EmpireEx_11%gdi%1%{{\"PID\":{}}}%", uid),
             ClientPacket::Gaa(ref data) => format!("%xt%EmpireEx_11%gaa%1%{}%", data),
         }
