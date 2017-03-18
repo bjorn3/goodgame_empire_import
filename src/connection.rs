@@ -15,7 +15,7 @@ pub struct Connection {
 
 lazy_static!{
     /// The Dutch server (37.48.88.129)
-    pub static ref DUTCH_SERVER: SocketAddr = "37.48.88.129:443".parse().unwrap();
+    pub static ref DUTCH_SERVER: SocketAddr = "37.48.88.129:80".parse().unwrap();
     /// Local server (127.0.0.1:8081)
     pub static ref LOCAL_SERVER: SocketAddr = "127.0.0.1:8081".parse().unwrap();
 }

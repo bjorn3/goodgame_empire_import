@@ -1,6 +1,6 @@
 use serde_json::value::{Value, from_value};
 
-use error::{Error, ErrorKind, ResultExt};
+use error::{Error, ErrorKind, Result, ResultExt};
 use data::{User, Castle, World};
 
 trait Flatten<T> {
@@ -30,7 +30,7 @@ pub struct Gaa {
 
 impl Gaa {
     /// Parse text returned from the server
-    pub fn parse(data: String) -> Result<Self, Error> {
+    pub fn parse(data: String) -> Result<Self> {
         #[derive(Deserialize)]
         #[allow(non_snake_case)]
         #[allow(non_camel_case_types)]
@@ -128,4 +128,18 @@ impl Gaa {
         };
         Ok(gaa)
     }
+}
+
+pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::data::DataMgr) -> Result<()>{
+    let gaa = ::slog_scope::scope(::slog_scope::logger().new(o!("packet"=>"gaa")), || Gaa::parse(::serde_json::ser::to_string(&obj).unwrap())).chain_err(||"Couldnt read gaa packet")?;
+    for castle in gaa.castles.iter() {
+        data_mgr.add_castle(castle.clone());
+    }
+    for castle in gaa.castle_names.iter() {
+        data_mgr.add_castle(castle.clone());
+    }
+    for user in gaa.users.iter() {
+        data_mgr.users.insert(user.id, user.clone());
+    }
+    Ok(())
 }
