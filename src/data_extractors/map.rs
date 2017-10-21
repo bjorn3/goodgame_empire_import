@@ -108,7 +108,10 @@ impl Gaa {
                 .map(Option::unwrap)
                 .map(ToString::to_string);
 
-            trace!(::slog_scope::logger(), "  process castle"; "castle" => ::serde_json::ser::to_string(castle).unwrap_or_else(|err|format!("{:?}", err)), "id" => id, "name" => name);
+            trace!(::slog_scope::logger(), "  process castle";
+                "castle" => ::serde_json::ser::to_string(castle).unwrap_or_else(|err|format!("{:?}", err)),
+                "id" => id,
+                "name" => name.clone());
             castle_names.push(Castle {
                 id: id,
                 owner_id: None,
@@ -131,7 +134,9 @@ impl Gaa {
 }
 
 pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::data::DataMgr) -> Result<()>{
-    let gaa = ::slog_scope::scope(::slog_scope::logger().new(o!("packet"=>"gaa")), || Gaa::parse(::serde_json::ser::to_string(&obj).unwrap())).chain_err(||"Couldnt read gaa packet")?;
+    let gaa = ::slog_scope::scope(
+        &::slog_scope::logger().new(o!("packet"=>"gaa")),
+        || Gaa::parse(::serde_json::ser::to_string(&obj).unwrap())).chain_err(||"Couldnt read gaa packet")?;
     for castle in gaa.castles.iter() {
         data_mgr.add_castle(castle.clone());
     }

@@ -25,13 +25,13 @@ pub enum World {
     SpecialEvent = 4,
 }
 
-impl Deserialize for World{
+impl<'de> Deserialize<'de> for World{
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer
+        where D: Deserializer<'de>
     {
         struct WorldVisitor;
 
-        impl Visitor for WorldVisitor {
+        impl<'de> Visitor<'de> for WorldVisitor {
             type Value = World;
 
             fn visit_u64<E: ::serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {

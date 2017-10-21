@@ -125,7 +125,7 @@ impl SmartFoxClient {
                     .expect("Malformed utf8 data provided by the server")
             })
             .map(move |data| {
-                trace!(logger.clone(), "Received data"; "data" => data);
+                trace!(logger.clone(), "Received data"; "data" => data.clone());
                 data
             });
 

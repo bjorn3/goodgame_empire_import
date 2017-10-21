@@ -10,6 +10,7 @@ extern crate gge;
 use std::env;
 use std::io;
 use std::io::Write;
+use std::sync::Mutex;
 
 use gge::error::{self, ResultExt};
 use gge::to_json;
@@ -24,19 +25,20 @@ fn main() {
         .write(true)
         .open("./log.json")
         .expect("Cant open log file log.json");
-    let json_log_formatter = slog_json::new().set_newlines(true).add_default_keys().build();
+    let term_logger = slog::LevelFilter::new(slog_term::term_compact(), slog::Level::Debug);
+    let json_logger = slog_json::Json::new(log_file).set_newlines(true).add_default_keys().build();
 
     let logger = slog::Logger::root(
-        slog::Fuse::new(
+        slog::Fuse::new(Mutex::new(
             slog::Duplicate::new(
-                slog::LevelFilter::new(slog_term::streamer().compact().build(), slog::Level::Debug),
-                slog_stream::stream(log_file, json_log_formatter)
+                term_logger,
+                json_logger
             )
-        ),
+        )),
         o!("version" => env!("CARGO_PKG_VERSION"))
     );
 
-    slog_scope::set_global_logger(logger.clone());
+    let _global_log_guard = slog_scope::set_global_logger(logger.clone());
 
     if let Err(ref e) = run() {
         let logger = logger.new(o!("error" => ""));
@@ -68,7 +70,7 @@ fn run() -> gge::error::Result<()> {
     let mut con = Connection::new(*LOCAL_SERVER, &un, &pw, logger.clone())?;
 
     for pkt in con.read_packets(logger.clone())? {
-        slog_scope::scope(logger.new(o!("process"=>"pre map")),
+        slog_scope::scope(&logger.new(o!("process"=>"pre map")),
                           || process_packet(&mut con, pkt))?;
     }
 
@@ -100,7 +102,7 @@ fn run() -> gge::error::Result<()> {
     debug!(logger.clone(), "");
 
     for pkt in con.read_packets(logger.clone())? {
-        slog_scope::scope(logger.new(o!("process"=>"post map")), || process_packet(&mut con, pkt))?;
+        slog_scope::scope(&logger.new(o!("process"=>"post map")), || process_packet(&mut con, pkt))?;
     }
 
     debug!(logger.clone(), "");
@@ -127,7 +129,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = slog_scope::scope(logger.new(o!("packet"=>"gdb")),
+            let data = slog_scope::scope(&logger.new(o!("packet"=>"gdb")),
                                          || gge::data_extractors::gbd::Gbd::parse_val(data.to_owned())).chain_err(||"Couldnt read gdb packet")?;
             gge::read_castles(data.clone());
 
@@ -138,12 +140,12 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
             }
         }
         ServerPacket::Gdi(data) => {
-            slog_scope::scope(logger.new(o!("packet"=>"gdi")),
+            slog_scope::scope(&logger.new(o!("packet"=>"gdi")),
                               || gge::read_names(data))?;
         }
         ServerPacket::Gaa(data) => {
-            trace!(logger, "gaa packet"; "data" => data);
-            let gaa = slog_scope::scope(logger.new(o!("packet"=>"gaa")), || gge::data_extractors::map::Gaa::parse(data)).chain_err(||"Couldnt read gaa packet")?;
+            trace!(logger, "gaa packet"; "data" => data.clone());
+            let gaa = slog_scope::scope(&logger.new(o!("packet"=>"gaa")), || gge::data_extractors::map::Gaa::parse(data)).chain_err(||"Couldnt read gaa packet")?;
             for castle in gaa.castles.iter() {
                 DATAMGR.lock().unwrap().add_castle(castle.clone());
             }

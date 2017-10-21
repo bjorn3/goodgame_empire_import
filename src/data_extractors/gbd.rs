@@ -149,7 +149,7 @@ impl Gbd {
 }
 
 pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::data::DataMgr) -> Result<()>{
-    let data = ::slog_scope::scope(::slog_scope::logger().new(o!("packet"=>"gdb")),
+    let data = ::slog_scope::scope(&::slog_scope::logger().new(o!("packet"=>"gdb")),
                                    || Gbd::parse_val(obj)).chain_err(||"Couldnt read gdb packet")?;
     for ain in data.ain {
         for castle in ain.ap {
