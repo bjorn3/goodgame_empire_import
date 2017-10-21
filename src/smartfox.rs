@@ -20,7 +20,8 @@ impl fmt::Debug for SmartFoxPacket {
 /// Create a SmartFoxServer packet from a string
 #[allow(non_snake_case)]
 pub fn SmartFoxPacket<T>(data: T) -> SmartFoxPacket
-    where T: Into<String>
+where
+    T: Into<String>,
 {
     SmartFoxPacket { data: data.into() }
 }
@@ -52,13 +53,15 @@ impl SmartFoxClient {
     ///           </login>
     ///       </body></msg>
     /// ```
-    pub fn new(stream: TcpStream,
-               room: &str,
-               username: &str,
-               password: &str,
-               logger: Logger)
-               -> Result<Self> {
-        stream.set_read_timeout(Some(::std::time::Duration::new(2, 0)))
+    pub fn new(
+        stream: TcpStream,
+        room: &str,
+        username: &str,
+        password: &str,
+        logger: Logger,
+    ) -> Result<Self> {
+        stream
+            .set_read_timeout(Some(::std::time::Duration::new(2, 0)))
             .chain_err(|| "Couldnt set stream timeout")?;
 
         let mut con = SmartFoxClient {
@@ -81,8 +84,12 @@ impl SmartFoxClient {
             password
         );
 
-        con.send_packet(SmartFoxPacket(login_header)).chain_err(|| "Couldn't connect to server")?;
-        con.read_packets(logger).chain_err(|| "Couldn't connect to server")?;
+        con.send_packet(SmartFoxPacket(login_header)).chain_err(
+            || "Couldn't connect to server",
+        )?;
+        con.read_packets(logger).chain_err(
+            || "Couldn't connect to server",
+        )?;
 
         Ok(con)
     }
@@ -91,10 +98,12 @@ impl SmartFoxClient {
     fn recv(&mut self) -> Result<String> {
         let mut data = [0; 8192];
 
-        self.stream.read(&mut data).chain_err(||"Couldnt read from stream")?;
+        self.stream.read(&mut data).chain_err(
+            || "Couldnt read from stream",
+        )?;
 
         let data = str::from_utf8(&data)
-            .chain_err(||"Malformed utf8 data provided by the server")?
+            .chain_err(|| "Malformed utf8 data provided by the server")?
             .trim_matches('\0')
             .to_string();
 
@@ -108,21 +117,25 @@ impl SmartFoxClient {
     /// Send a zero terminated packet
     pub fn send_packet(&mut self, packet: SmartFoxPacket) -> Result<()> {
         let data = packet.data + "\0";
-        self.stream.write(data.as_bytes()).chain_err(|| "Cant write to server stream")?;
+        self.stream.write(data.as_bytes()).chain_err(
+            || "Cant write to server stream",
+        )?;
         Ok(())
     }
 
     /// Read zero terminated packets
     pub fn read_packets(&mut self, logger: Logger) -> Result<Box<Iterator<Item = SmartFoxPacket>>> {
         static SPLIT: &'static [u8] = &[0x00];
-        let buf_reader = Box::new(::std::io::BufReader::new(self.stream
-            .try_clone()
-            .chain_err(|| "Couldnt clone stream")?));
+        let buf_reader = Box::new(::std::io::BufReader::new(
+            self.stream.try_clone().chain_err(|| "Couldnt clone stream")?,
+        ));
         let splitter = ::byte_stream_splitter::ByteStreamSplitter::new(buf_reader, SPLIT);
 
-        let data = splitter.map(|splited| {
-                String::from_utf8(splited.unwrap())
-                    .expect("Malformed utf8 data provided by the server")
+        let data = splitter
+            .map(|splited| {
+                String::from_utf8(splited.unwrap()).expect(
+                    "Malformed utf8 data provided by the server",
+                )
             })
             .map(move |data| {
                 trace!(logger.clone(), "Received data"; "data" => data.clone());

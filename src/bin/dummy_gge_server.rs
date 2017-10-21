@@ -23,11 +23,11 @@ fn main() {
     let connections = listener.incoming();
     let server = connections.for_each(move |(socket, _peer_addr)| {
         let (writer, reader) = socket.framed(SmartFoxCodec).split();
-        let service = (|| Ok(SmartFoxService::new(ServerDelegate{loggedin:false}))).new_service()?;
+        let service = (|| Ok(SmartFoxService::new(ServerDelegate { loggedin: false })))
+            .new_service()?;
 
         let responses = reader.and_then(move |req| service.call(req));
-        let server = writer.send_all(responses)
-            .then(|_| Ok(()));
+        let server = writer.send_all(responses).then(|_| Ok(()));
         handle.spawn(server);
 
         Ok(())
@@ -37,8 +37,8 @@ fn main() {
 }
 
 
-struct ServerDelegate{
-    loggedin: bool
+struct ServerDelegate {
+    loggedin: bool,
 }
 
 impl Delegate for ServerDelegate {
@@ -52,13 +52,16 @@ impl Delegate for ServerDelegate {
 
     fn request(&mut self, packet: smartfox::packet::Packet) -> Vec<smartfox::packet::Packet> {
         const RESPONSE: &'static str = include_str!("../../raw_data.bin");
-        let res = RESPONSE.split('\n').map(|pkt|pkt.parse::<smartfox::packet::Packet>().unwrap()).collect::<Vec<_>>();
+        let res = RESPONSE
+            .split('\n')
+            .map(|pkt| pkt.parse::<smartfox::packet::Packet>().unwrap())
+            .collect::<Vec<_>>();
         println!("{:?}", packet);
-        if !self.loggedin{
+        if !self.loggedin {
             println!("{:#?}", res);
             self.loggedin = true;
             res
-        }else{
+        } else {
             Vec::new()
         }
     }

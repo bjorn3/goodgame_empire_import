@@ -26,16 +26,14 @@ fn main() {
         .open("./log.json")
         .expect("Cant open log file log.json");
     let term_logger = slog::LevelFilter::new(slog_term::term_compact(), slog::Level::Debug);
-    let json_logger = slog_json::Json::new(log_file).set_newlines(true).add_default_keys().build();
+    let json_logger = slog_json::Json::new(log_file)
+        .set_newlines(true)
+        .add_default_keys()
+        .build();
 
     let logger = slog::Logger::root(
-        slog::Fuse::new(Mutex::new(
-            slog::Duplicate::new(
-                term_logger,
-                json_logger
-            )
-        )),
-        o!("version" => env!("CARGO_PKG_VERSION"))
+        slog::Fuse::new(Mutex::new(slog::Duplicate::new(term_logger, json_logger))),
+        o!("version" => env!("CARGO_PKG_VERSION")),
     );
 
     let _global_log_guard = slog_scope::set_global_logger(logger.clone());
@@ -63,15 +61,18 @@ fn main() {
 
 fn run() -> gge::error::Result<()> {
     let logger = slog_scope::logger();
-    io::stderr().write(b"Please login\n").chain_err(|| "Cant write to stderr")?;
+    io::stderr().write(b"Please login\n").chain_err(
+        || "Cant write to stderr",
+    )?;
     let un: String = env_or_ask("GGE_USERNAME", "Username: ");
     let pw: String = env_or_ask("GGE_PASSWORD", "Password: ");
 
-    let mut con = Connection::new(*LOCAL_SERVER, &un, &pw, logger.clone())?;
+    let mut con = Connection::new(*DUTCH_SERVER, &un, &pw, logger.clone())?;
 
     for pkt in con.read_packets(logger.clone())? {
-        slog_scope::scope(&logger.new(o!("process"=>"pre map")),
-                          || process_packet(&mut con, pkt))?;
+        slog_scope::scope(&logger.new(o!("process"=>"pre map")), || {
+            process_packet(&mut con, pkt)
+        })?;
     }
 
     debug!(logger.clone(), "");
@@ -102,12 +103,20 @@ fn run() -> gge::error::Result<()> {
     debug!(logger.clone(), "");
 
     for pkt in con.read_packets(logger.clone())? {
-        slog_scope::scope(&logger.new(o!("process"=>"post map")), || process_packet(&mut con, pkt))?;
+        slog_scope::scope(&logger.new(o!("process"=>"post map")), || {
+            process_packet(&mut con, pkt)
+        })?;
     }
 
     debug!(logger.clone(), "");
 
-    for castle in DATAMGR.lock().expect("Cant lock DATAMGR").castles.values().take(40) {
+    for castle in DATAMGR
+        .lock()
+        .expect("Cant lock DATAMGR")
+        .castles
+        .values()
+        .take(40)
+    {
         info!(logger.clone(), "     read castle"; "castle" => format!("{:?}", castle));
     }
 
@@ -119,9 +128,14 @@ fn run() -> gge::error::Result<()> {
         .create(true)
         .truncate(true)
         .open(file_name)
-        .chain_err(||"Cant open data file")?;
+        .chain_err(|| "Cant open data file")?;
 
-    write!(f, "{}", to_json(&*DATAMGR.lock().expect("Cant lock DATAMGR")).chain_err(||"Cant serialize data")?).chain_err(||"Cant write data to file")
+    write!(
+        f,
+        "{}",
+        to_json(&*DATAMGR.lock().expect("Cant lock DATAMGR"))
+            .chain_err(|| "Cant serialize data")?
+    ).chain_err(|| "Cant write data to file")
 }
 
 fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> {
@@ -129,23 +143,29 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
     match pkt {
         ServerPacket::Gbd(ref data) => {
             let data = &*data;
-            let data = slog_scope::scope(&logger.new(o!("packet"=>"gdb")),
-                                         || gge::data_extractors::gbd::Gbd::parse_val(data.to_owned())).chain_err(||"Couldnt read gdb packet")?;
+            let data = slog_scope::scope(&logger.new(o!("packet"=>"gdb")), || {
+                gge::data_extractors::gbd::Gbd::parse_val(data.to_owned())
+            }).chain_err(|| "Couldnt read gdb packet")?;
             gge::read_castles(data.clone());
 
             let data_mgr = DATAMGR.lock().unwrap();
-            let users = data_mgr.users.values().map(|user| user.clone()).collect::<Vec<_>>();
+            let users = data_mgr
+                .users
+                .values()
+                .map(|user| user.clone())
+                .collect::<Vec<_>>();
             for user in users {
                 con.send_packet(ClientPacket::Gdi(user.id))?;
             }
         }
         ServerPacket::Gdi(data) => {
-            slog_scope::scope(&logger.new(o!("packet"=>"gdi")),
-                              || gge::read_names(data))?;
+            slog_scope::scope(&logger.new(o!("packet"=>"gdi")), || gge::read_names(data))?;
         }
         ServerPacket::Gaa(data) => {
             trace!(logger, "gaa packet"; "data" => data.clone());
-            let gaa = slog_scope::scope(&logger.new(o!("packet"=>"gaa")), || gge::data_extractors::map::Gaa::parse(data)).chain_err(||"Couldnt read gaa packet")?;
+            let gaa = slog_scope::scope(&logger.new(o!("packet"=>"gaa")), || {
+                gge::data_extractors::map::Gaa::parse(data)
+            }).chain_err(|| "Couldnt read gaa packet")?;
             for castle in gaa.castles.iter() {
                 DATAMGR.lock().unwrap().add_castle(castle.clone());
             }
@@ -164,12 +184,10 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
 
 fn env_or_ask(env_name: &str, question: &str) -> String {
     env::var(env_name)
-        .and_then(|data| {
-            if data.len() < 2 {
-                Err(env::VarError::NotPresent)
-            } else {
-                Ok(data)
-            }
+        .and_then(|data| if data.len() < 2 {
+            Err(env::VarError::NotPresent)
+        } else {
+            Ok(data)
         })
         .or_else(|_| -> error::Result<_> {
             let mut data = String::new();
@@ -182,12 +200,10 @@ fn env_or_ask(env_name: &str, question: &str) -> String {
 
 fn env_or_default(env_name: &str, default: &str) -> String {
     env::var(env_name)
-        .and_then(|data| {
-            if data.len() < 2 {
-                Err(env::VarError::NotPresent)
-            } else {
-                Ok(data)
-            }
+        .and_then(|data| if data.len() < 2 {
+            Err(env::VarError::NotPresent)
+        } else {
+            Ok(data)
         })
-        .unwrap_or_else(|_| default.trim().to_string() )
+        .unwrap_or_else(|_| default.trim().to_string())
 }

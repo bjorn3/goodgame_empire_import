@@ -14,7 +14,9 @@ macro_rules! try_field{
 /// Can parse castles
 pub trait CastleParse {
     /// Parse castle
-    fn parse(json: Value, owner_id: u64) -> Result<Self> where Self: Sized;
+    fn parse(json: Value, owner_id: u64) -> Result<Self>
+    where
+        Self: Sized;
 }
 
 impl CastleParse for Castle {
@@ -25,8 +27,9 @@ impl CastleParse for Castle {
         /// ain A M [] AP/VP
         struct _FieldAinM__APVP(World, u64, u64, u64, u64);
 
-        let obj: _FieldAinM__APVP = from_value(json.clone())
-            .chain_err(|| "Cant deserialize gdb ain A M [] AP/VP")?;
+        let obj: _FieldAinM__APVP = from_value(json.clone()).chain_err(
+            || "Cant deserialize gdb ain A M [] AP/VP",
+        )?;
 
         Ok(Castle {
             id: obj.1, // ain A M [] AP/VP [1] (id)
@@ -66,12 +69,14 @@ impl FieldAinM {
             VP: Vec<Value>,
         }
 
-        let json: &Vec<Value> = json.as_array()
-            .ok_or(ErrorKind::InvalidFormat("gbd ain A M not an array".into()))?;
+        let json: &Vec<Value> = json.as_array().ok_or(ErrorKind::InvalidFormat(
+            "gbd ain A M not an array".into(),
+        ))?;
         return json.into_iter()
             .map(|row| {
-                let obj: _FieldAinM__ = from_value(row.clone())
-                    .chain_err(|| "Cant deserialize gdb ain A M []")?;
+                let obj: _FieldAinM__ = from_value(row.clone()).chain_err(
+                    || "Cant deserialize gdb ain A M []",
+                )?;
 
                 let oid = obj.OID; // ain A M [] OID
                 let n = obj.N; // ain A M [] N (username)
@@ -123,10 +128,7 @@ impl Gbd {
         let gpi = try_field!(data, "gpi");
         let ain = json_data.pointer("/ain/A/M").unwrap(); // ain A M
         let ain = FieldAinM::parse(ain)?;
-        let gbd = Gbd {
-            gpi: gpi,
-            ain: ain,
-        };
+        let gbd = Gbd { gpi: gpi, ain: ain };
         Ok(gbd)
     }
 
@@ -140,17 +142,19 @@ impl Gbd {
         let gpi = try_field!(data, "gpi");
         let ain = json_data.pointer("/ain/A/M").unwrap(); // ain A M
         let ain = FieldAinM::parse(ain)?;
-        let gbd = Gbd {
-            gpi: gpi,
-            ain: ain,
-        };
+        let gbd = Gbd { gpi: gpi, ain: ain };
         Ok(gbd)
     }
 }
 
-pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::data::DataMgr) -> Result<()>{
-    let data = ::slog_scope::scope(&::slog_scope::logger().new(o!("packet"=>"gdb")),
-                                   || Gbd::parse_val(obj)).chain_err(||"Couldnt read gdb packet")?;
+pub fn extract(
+    obj: Value,
+    con: &mut ::connection::Connection,
+    data_mgr: &mut ::data::DataMgr,
+) -> Result<()> {
+    let data = ::slog_scope::scope(&::slog_scope::logger().new(o!("packet"=>"gdb")), || {
+        Gbd::parse_val(obj)
+    }).chain_err(|| "Couldnt read gdb packet")?;
     for ain in data.ain {
         for castle in ain.ap {
             DATAMGR.lock().unwrap().add_castle(castle);
@@ -160,7 +164,11 @@ pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::
         }
     }
 
-    let users = data_mgr.users.values().map(|user| user.clone()).collect::<Vec<_>>();
+    let users = data_mgr
+        .users
+        .values()
+        .map(|user| user.clone())
+        .collect::<Vec<_>>();
     for user in users {
         con.send_packet(::packet::ClientPacket::Gdi(user.id))?;
     }

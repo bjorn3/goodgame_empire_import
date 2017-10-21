@@ -34,17 +34,25 @@ impl Connection {
     /// send: %xt%EmpireEx_11%lli%1%{"CONM":413,"KID":"","DID":"","ID":0,"PW":"<#password#>","AID":"1456064275209394654","NOM":"<#username#>","RTM":129,"LANG":"nl"}%
     /// ```
     pub fn new(server: SocketAddr, un: &str, pw: &str, logger: Logger) -> Result<Self> {
-        let stream = try!(TcpStream::connect(server)
-            .chain_err(|| "Can't connect to server"));
-        try!(stream.set_read_timeout(Some(::std::time::Duration::new(2, 0)))
-            .chain_err(|| "Can't set server connection timeout"));
+        let stream = try!(TcpStream::connect(server).chain_err(
+            || "Can't connect to server",
+        ));
+        try!(
+            stream
+                .set_read_timeout(Some(::std::time::Duration::new(2, 0)))
+                .chain_err(|| "Can't set server connection timeout")
+        );
 
-        //                                          room               02/17/2016 @ 12:31pm (UTC) unix timestamp with millisecond precision
-        //                                          v                  v
-        let smartfox = SmartFoxClient::new(stream, "EmpireEx_11", "", "1455712286016%nl%", logger.clone())?;
+        let smartfox = SmartFoxClient::new(
+            stream,
+            "EmpireEx_11", // room
+            "",
+            "1455712286016%nl%", // 02/17/2016 @ 12:31pm (UTC) unix timestamp with millisecond precision
+            logger.clone(),
+        )?;
         let mut con = Connection {
             smartfox: smartfox,
-            logger: logger
+            logger: logger,
         };
 
         let login_code = r##"%xt%EmpireEx_11%lli%1%{"RTM":32,"FID":null,"ID":0,"PW":"{pw}","FTK":null,"REF":"http://empire.goodgamestudios.com","FAID":null,"KID":"","LANG":"nl","NOM":"{un}","AID":"1433061122034798333","CONM":182,"DID":""}%"##.to_string().replace("{pw}", pw).replace("{un}", un);
@@ -58,7 +66,9 @@ impl Connection {
 
     /// Send gge packet
     pub fn send_packet(&mut self, packet: ClientPacket) -> Result<()> {
-        self.smartfox.send_packet(SmartFoxPacket(packet.to_raw_data()))?;
+        self.smartfox.send_packet(
+            SmartFoxPacket(packet.to_raw_data()),
+        )?;
         debug!(self.logger, "     send packet"; "packet" => format!("{:?}", packet));
         Ok(())
     }
@@ -70,7 +80,9 @@ impl Connection {
         let data = self.smartfox
             .read_packets(logger.clone())
             .chain_err(|| "Couldnt read packets")?
-            .map(|p| ServerPacket::new(p.data).expect("Received invalid packet"))
+            .map(|p| {
+                ServerPacket::new(p.data).expect("Received invalid packet")
+            })
             .filter(|packet| {
                 // Ignore kpi and irc packets
                 match *packet {

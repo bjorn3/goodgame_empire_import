@@ -62,7 +62,8 @@ impl From<io::Error> for SplitError {
 
 
 impl<'a, T> ByteStreamSplitter<'a, T>
-    where T: BufRead + Sized
+where
+    T: BufRead + Sized,
 {
     pub fn new(input: T, separator: &'a [u8]) -> ByteStreamSplitter<'a, T> {
         ByteStreamSplitter {
@@ -77,9 +78,10 @@ impl<'a, T> ByteStreamSplitter<'a, T>
     }
 
 
-    fn read_until_first_separator_byte_or_eof(&mut self,
-                                              output: &mut Write)
-                                              -> SplitResult<Option<u8>> {
+    fn read_until_first_separator_byte_or_eof(
+        &mut self,
+        output: &mut Write,
+    ) -> SplitResult<Option<u8>> {
         let buffer = &mut self.buffer;
         buffer.clear();
 
@@ -96,13 +98,17 @@ impl<'a, T> ByteStreamSplitter<'a, T>
     pub fn next_to_buf(&mut self, output: &mut Write) -> SplitResult<SplitType> {
 
         if self.end_of_stream_reached {
-            return Err(SplitError::Io(io::Error::new(io::ErrorKind::InvalidInput,
-                                                     "Stream has no more data.")));
+            return Err(SplitError::Io(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Stream has no more data.",
+            )));
         }
 
         loop {
-            let last_byte = if let Some(last_byte) =
-                                   try!(self.read_until_first_separator_byte_or_eof(output)) {
+            let last_byte = if let Some(last_byte) = try!(
+                self.read_until_first_separator_byte_or_eof(output)
+            )
+            {
                 last_byte
             } else {
                 self.end_of_stream_reached = true;
@@ -161,7 +167,8 @@ impl<'a, T> ByteStreamSplitter<'a, T>
 }
 
 impl<'a, T> Iterator for ByteStreamSplitter<'a, T>
-    where T: BufRead + Sized
+where
+    T: BufRead + Sized,
 {
     type Item = SplitResult<Vec<u8>>;
 
@@ -169,15 +176,17 @@ impl<'a, T> Iterator for ByteStreamSplitter<'a, T>
         if self.end_of_stream_reached {
             None
         } else {
-            let mut part = BufWriter::new(if self.started_splitting &&
-                                             self.next_prepends_seperator {
-                Vec::from(self.separator)
-            } else {
-                Vec::new()
-            });
+            let mut part =
+                BufWriter::new(if self.started_splitting && self.next_prepends_seperator {
+                    Vec::from(self.separator)
+                } else {
+                    Vec::new()
+                });
             let result = self.next_to_buf(&mut part)
                 .and(part.flush().map_err(SplitError::Io))
-                .and(part.into_inner().map_err(|e| SplitError::Internal(e.to_string())));
+                .and(part.into_inner().map_err(
+                    |e| SplitError::Internal(e.to_string()),
+                ));
 
             match result {
                 Ok(inner) => Some(Ok(inner)),

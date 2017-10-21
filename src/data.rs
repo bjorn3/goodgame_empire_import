@@ -25,9 +25,10 @@ pub enum World {
     SpecialEvent = 4,
 }
 
-impl<'de> Deserialize<'de> for World{
+impl<'de> Deserialize<'de> for World {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         struct WorldVisitor;
 
@@ -43,7 +44,7 @@ impl<'de> Deserialize<'de> for World{
                     4 => Ok(World::SpecialEvent),
                     _ => {
                         Err(::serde::de::Error::custom(
-                            format_args!("Unrecognized world number {}", v)
+                            format_args!("Unrecognized world number {}", v),
                         ))
                     }
                 }
@@ -184,21 +185,24 @@ mod tests {
         });
 
         let mut expected_castles = HashMap::new();
-        expected_castles.insert(42, Castle {
-            id: 42,
-            owner_id: Some(84),
-            name: Some("some name".to_string()),
-            x: Some(10),
-            y: Some(20),
-            world: Some(World::Grass),
-        });
-        
+        expected_castles.insert(
+            42,
+            Castle {
+                id: 42,
+                owner_id: Some(84),
+                name: Some("some name".to_string()),
+                x: Some(10),
+                y: Some(20),
+                world: Some(World::Grass),
+            },
+        );
+
         assert_eq!(data_mgr.castles, expected_castles);
     }
 
     #[test]
     #[should_panic]
-    fn conflicting_castle_world(){
+    fn conflicting_castle_world() {
         let mut data_mgr = DataMgr::new();
         data_mgr.add_castle(Castle {
             id: 42,
@@ -220,7 +224,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn conflicting_castle_position(){
+    fn conflicting_castle_position() {
         let mut data_mgr = DataMgr::new();
         data_mgr.add_castle(Castle {
             id: 42,

@@ -58,7 +58,9 @@ impl Gaa {
             return Err(ErrorKind::InvalidFormat("gaa not an object".into()).into());
         }
 
-        let obj: _Self = from_value(data.clone()).chain_err(|| "failed to deserialize gaa")?;
+        let obj: _Self = from_value(data.clone()).chain_err(
+            || "failed to deserialize gaa",
+        )?;
 
         let world: World = obj.KID;
 
@@ -103,10 +105,9 @@ impl Gaa {
                 continue;
             }
             let id = id.unwrap();
-            let name = castle.get(10)
-                .map(Value::as_str)
-                .map(Option::unwrap)
-                .map(ToString::to_string);
+            let name = castle.get(10).map(Value::as_str).map(Option::unwrap).map(
+                ToString::to_string,
+            );
 
             trace!(::slog_scope::logger(), "  process castle";
                 "castle" => ::serde_json::ser::to_string(castle).unwrap_or_else(|err|format!("{:?}", err)),
@@ -133,10 +134,14 @@ impl Gaa {
     }
 }
 
-pub fn extract(obj: Value, con: &mut ::connection::Connection, data_mgr: &mut ::data::DataMgr) -> Result<()>{
-    let gaa = ::slog_scope::scope(
-        &::slog_scope::logger().new(o!("packet"=>"gaa")),
-        || Gaa::parse(::serde_json::ser::to_string(&obj).unwrap())).chain_err(||"Couldnt read gaa packet")?;
+pub fn extract(
+    obj: Value,
+    con: &mut ::connection::Connection,
+    data_mgr: &mut ::data::DataMgr,
+) -> Result<()> {
+    let gaa = ::slog_scope::scope(&::slog_scope::logger().new(o!("packet"=>"gaa")), || {
+        Gaa::parse(::serde_json::ser::to_string(&obj).unwrap())
+    }).chain_err(|| "Couldnt read gaa packet")?;
     for castle in gaa.castles.iter() {
         data_mgr.add_castle(castle.clone());
     }
