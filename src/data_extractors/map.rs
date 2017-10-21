@@ -1,6 +1,7 @@
-use serde_json::value::{Value, from_value};
+use serde_json::value::Value;
+use serde_json::de::from_str;
 
-use error::{Error, ErrorKind, Result, ResultExt};
+use error::{Result, ResultExt};
 use data::{User, Castle, World};
 
 trait Flatten<T> {
@@ -53,12 +54,7 @@ impl Gaa {
         }
 
         let data = data.trim_matches('%');
-        let data: Value = try!(::serde_json::de::from_str(&data));
-        if !data.is_object() {
-            return Err(ErrorKind::InvalidFormat("gaa not an object".into()).into());
-        }
-
-        let obj: _Self = from_value(data.clone()).chain_err(
+        let obj: _Self = from_str(&data).chain_err(
             || "failed to deserialize gaa",
         )?;
 
@@ -98,6 +94,7 @@ impl Gaa {
         for castle in obj.AI {
             let castle = castle.as_array().unwrap();
             if castle.len() < 10 {
+                //warn!(::slog_scope::logger(), "ignoring to short castle {}", Value::Array(castle.to_owned()));
                 continue;
             }
             let id = castle[3].as_u64();
@@ -105,9 +102,7 @@ impl Gaa {
                 continue;
             }
             let id = id.unwrap();
-            let name = castle.get(10).map(Value::as_str).map(Option::unwrap).map(
-                ToString::to_string,
-            );
+            let name = ::get_name_from_slice(castle);
 
             trace!(::slog_scope::logger(), "  process castle";
                 "castle" => ::serde_json::ser::to_string(castle).unwrap_or_else(|err|format!("{:?}", err)),
@@ -135,13 +130,11 @@ impl Gaa {
 }
 
 pub fn extract(
-    obj: Value,
-    con: &mut ::connection::Connection,
+    obj: String,
+    _con: &mut ::connection::Connection,
     data_mgr: &mut ::data::DataMgr,
 ) -> Result<()> {
-    let gaa = ::slog_scope::scope(&::slog_scope::logger().new(o!("packet"=>"gaa")), || {
-        Gaa::parse(::serde_json::ser::to_string(&obj).unwrap())
-    }).chain_err(|| "Couldnt read gaa packet")?;
+    let gaa = Gaa::parse(obj).chain_err(|| "Couldnt read gaa packet")?;
     for castle in gaa.castles.iter() {
         data_mgr.add_castle(castle.clone());
     }

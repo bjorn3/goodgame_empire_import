@@ -119,6 +119,17 @@ fn run() -> gge::error::Result<()> {
     {
         info!(logger.clone(), "     read castle"; "castle" => format!("{:?}", castle));
     }
+    let mut max_x = 0;
+    let mut max_y = 0;
+    for castle in DATAMGR.lock().unwrap().castles.values() {
+        if let Some(x) = castle.x {
+            if x > max_x { max_x = x; }
+        }
+        if let Some(y) = castle.y {
+            if y > max_y { max_y = y; }
+        }
+    }
+    info!(logger.clone(), " maximum coordinates x={} y={}", max_x, max_y);
 
     let file_name = env_or_default("GGE_FILENAME", "data2.json");
 
@@ -142,7 +153,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
     let logger = slog_scope::logger();
     match pkt {
         ServerPacket::Gbd(ref data) => {
-            let data = &*data;
+            /*let data = &*data;
             let data = slog_scope::scope(&logger.new(o!("packet"=>"gdb")), || {
                 gge::data_extractors::gbd::Gbd::parse_val(data.to_owned())
             }).chain_err(|| "Couldnt read gdb packet")?;
@@ -156,7 +167,7 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
                 .collect::<Vec<_>>();
             for user in users {
                 con.send_packet(ClientPacket::Gdi(user.id))?;
-            }
+            }*/
         }
         ServerPacket::Gdi(data) => {
             slog_scope::scope(&logger.new(o!("packet"=>"gdi")), || gge::read_names(data))?;
@@ -164,18 +175,8 @@ fn process_packet(con: &mut Connection, pkt: ServerPacket) -> error::Result<()> 
         ServerPacket::Gaa(data) => {
             trace!(logger, "gaa packet"; "data" => data.clone());
             let gaa = slog_scope::scope(&logger.new(o!("packet"=>"gaa")), || {
-                gge::data_extractors::map::Gaa::parse(data)
+                gge::data_extractors::map::extract(data, con, &mut *DATAMGR.lock().unwrap())
             }).chain_err(|| "Couldnt read gaa packet")?;
-            for castle in gaa.castles.iter() {
-                DATAMGR.lock().unwrap().add_castle(castle.clone());
-            }
-            for castle in gaa.castle_names.iter() {
-                DATAMGR.lock().unwrap().add_castle(castle.clone());
-            }
-            for user in gaa.users.iter() {
-                DATAMGR.lock().unwrap().users.insert(user.id, user.clone());
-            }
-            //trace!(logger, "gaa  data"; "parsed" => format!("{:?}", gaa));
         }
         _ => {}
     };

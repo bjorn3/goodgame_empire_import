@@ -73,13 +73,8 @@ pub fn read_names(data: String) -> error::Result<()> {
                 .as_array()
                 .unwrap(); // gcl C [] AI [] AI (castle)
             let castle_id = castle[3].as_u64().unwrap(); // gcl C [] AI [] AI [3] (id)
-            let castle_name = if castle.len() == 18 {
-                castle[10].as_str().unwrap() // gcl C [] AI [] AI [10] (name)
-            } else if castle.len() == 10 {
-                castle[6].as_str().unwrap() // gcl C [] AI [] AI [6]  (name)
-            } else {
-                panic!("Invalid gcl C [] AI [] AI length {}", castle.len())
-            };
+            println!("castle: {}", Value::Array(castle.to_owned()));
+            let castle_name = get_name_from_slice(castle).expect("Invalid gcl C [] AI [] AI"); // gcl C [] AI [] AI [10] (name)
 
             let castle = data::Castle {
                 id: castle_id,
@@ -94,4 +89,18 @@ pub fn read_names(data: String) -> error::Result<()> {
         }
     }
     Ok(())
+}
+
+fn get_name_from_slice(slice: &[Value]) -> Option<String> {
+    let mut name = None;
+    for field in slice.iter() {
+        if let &Value::String(ref the_name) = field {
+            info!(::slog_scope::logger(), "Found name");
+            if name.is_some() {
+                error!(::slog_scope::logger(), "Duplicate name {} {}", name.unwrap(), the_name);
+            }
+            name = Some(the_name.to_string());
+        }
+    }
+    name
 }
