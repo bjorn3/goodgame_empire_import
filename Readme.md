@@ -1,4 +1,6 @@
-# A importer for goodgame empire
+# A importer for the game goodgame empire
+
+# Development discontinued.
 
 ## Quick Start
 
@@ -7,5 +9,3 @@ $ git clone https://github.com/bjorn3/goodgame_empire_import.git
 $ cd goodgame_empire_import
 $ cargo run
 ```
-
-## This is gpg signed
